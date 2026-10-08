@@ -106,8 +106,8 @@ export const AppShell: React.FC<Props> = ({
     'flex w-full items-baseline justify-between gap-4 px-4 py-3 text-left transition-colors hover:bg-tinta/5';
 
   return (
-    <div className="min-h-dvh bg-arena text-tinta select-none">
-      <div className="relative mx-auto flex min-h-dvh w-full max-w-[440px] flex-col md:border-x md:border-trazo/70">
+    <div className="min-h-dvh bg-[#e9dfce] text-tinta select-none">
+      <div className="relative mx-auto flex min-h-dvh w-full max-w-[440px] flex-col bg-arena md:border-x md:border-trazo/70">
         <header className="relative z-30 flex items-center justify-between px-5 pb-3 pt-5">
           <span className="ui-wordmark flex items-center gap-2 text-[19px] tracking-tight">
             <Enso />
