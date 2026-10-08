@@ -15,6 +15,11 @@ export const BALANCE = {
   priorityTask: 3,
   camera: 2,
   family: 10,
+  mode: 3, // finishing a disconnect mode
+  modeAbandoned: -2, // leaving a disconnect mode before the time is up
+  abandon: -8, // giving up a task that has a barrier
+  abandonPriority: -12, // same, for a high priority task
+  barrierBreak: -3, // coming back online during an airplane-mode block
   missedTask: -2,
   missedPriorityTask: -4,
   noFamilyDay: -5,
@@ -52,6 +57,8 @@ export const addDays = (key: string, n: number): string => {
 export interface GameClock {
   lastDay: string; // the in-progress game day
   lastFamilyDay: string; // last day a family moment was registered
+  lastModeDay?: string; // last day a disconnect mode was completed
+  streak?: number; // consecutive days with a completed mode, as of lastModeDay
 }
 
 export const defaultClock = (today: string = dayKey()): GameClock => ({
@@ -72,12 +79,14 @@ export interface DayEndReport {
  */
 export function computeDayEnd(tasks: Task[], lastFamilyDay: string, fromDay: string, days: number): DayEndReport {
   const daily = tasks.filter(t => t.isDaily);
+  // A task with a barrier cannot be put off: while it is pending it costs balance every day.
+  const committed = tasks.filter(t => !t.isDaily && t.barrier && !t.isCompleted);
   let delta = 0;
   let missedTasks = 0;
   let noFamilyDays = 0;
 
   for (let i = 0; i < days; i++) {
-    const missed = i === 0 ? daily.filter(t => !t.isCompleted) : daily;
+    const missed = [...(i === 0 ? daily.filter(t => !t.isCompleted) : daily), ...committed];
     for (const t of missed) {
       delta += t.isHighPriority ? BALANCE.missedPriorityTask : BALANCE.missedTask;
       missedTasks++;

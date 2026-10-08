@@ -1,11 +1,15 @@
 import React from 'react';
-import { Task, EnergyType } from '../types';
+import { Activity, MapPin, Plane } from 'lucide-react';
+import { Task, EnergyType, TaskBarrier } from '../types';
+import { BALANCE } from '../game/balance';
+import { describeBarrier } from '../game/barriers';
 import { sound } from '../services/sound';
 
 interface Props {
   task: Task;
   multiplierActive: boolean;
   onToggleComplete: (task: Task) => void;
+  onAbandon?: (task: Task) => void;
 }
 
 const CATEGORY: Record<EnergyType, { label: string; dot: string }> = {
@@ -13,6 +17,12 @@ const CATEGORY: Record<EnergyType, { label: string; dot: string }> = {
   familia: { label: 'Familia', dot: 'bg-rubia' },
   creativo: { label: 'Creativo', dot: 'bg-cochinilla' },
   activo: { label: 'Activo', dot: 'bg-musgo' },
+};
+
+const BARRIER_ICON: Record<TaskBarrier['kind'], React.ComponentType<{ className?: string }>> = {
+  place: MapPin,
+  move: Activity,
+  offline: Plane,
 };
 
 // An open circle that closes in one stroke when the task is done, like an enso.
@@ -45,21 +55,29 @@ const CheckRing: React.FC<{ done: boolean }> = ({ done }) => (
   </svg>
 );
 
-export const TaskCard: React.FC<Props> = ({ task, multiplierActive, onToggleComplete }) => {
+export const TaskCard: React.FC<Props> = ({ task, multiplierActive, onToggleComplete, onAbandon }) => {
   const cfg = CATEGORY[task.category];
+  const barrier = task.barrier ? describeBarrier(task.barrier) : null;
+  const BarrierIcon = task.barrier ? BARRIER_ICON[task.barrier.kind] : null;
+  const pendingBarrier = !!task.barrier && !task.isCompleted;
+  const locked = !!task.barrier && task.isCompleted; // a barrier task cannot be undone
 
   const isBoosted = multiplierActive || task.isHighPriority;
   const rewardAmount = isBoosted ? task.energyReward * 2 : task.energyReward;
+  const dailyCost = Math.abs(task.isHighPriority ? BALANCE.missedPriorityTask : BALANCE.missedTask);
 
   const handleToggle = () => {
+    if (locked) return;
     sound.playTap();
     onToggleComplete(task);
   };
 
   return (
     <div
-      role="checkbox"
-      aria-checked={task.isCompleted}
+      role={pendingBarrier ? 'button' : 'checkbox'}
+      aria-checked={pendingBarrier ? undefined : task.isCompleted}
+      aria-disabled={locked || undefined}
+      aria-label={pendingBarrier && barrier ? `Cumplir ${task.title}. Barrera: ${barrier.name}` : undefined}
       tabIndex={0}
       onClick={handleToggle}
       onKeyDown={e => {
@@ -68,9 +86,9 @@ export const TaskCard: React.FC<Props> = ({ task, multiplierActive, onToggleComp
           handleToggle();
         }
       }}
-      className={`flex cursor-pointer select-none items-start gap-4 py-4 transition-opacity duration-300 ${
-        task.isCompleted ? 'opacity-55' : ''
-      }`}
+      className={`flex select-none items-start gap-4 py-4 transition-opacity duration-300 ${
+        locked ? 'cursor-default' : 'cursor-pointer'
+      } ${task.isCompleted ? 'opacity-55' : ''}`}
     >
       <CheckRing done={task.isCompleted} />
 
@@ -94,6 +112,43 @@ export const TaskCard: React.FC<Props> = ({ task, multiplierActive, onToggleComp
           </span>
           {task.isHighPriority && <span className="font-bold text-curcuma-hondo">Alta prioridad x2</span>}
         </div>
+
+        {barrier && BarrierIcon && task.barrier && (
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+            <span className="flex items-center gap-1.5 font-bold text-tinta" data-barrier={task.barrier.kind}>
+              <BarrierIcon className="h-3.5 w-3.5" />
+              {barrier.name}
+            </span>
+            <span className="text-bruma">{barrier.detail}</span>
+          </div>
+        )}
+
+        {pendingBarrier && (
+          <div className="mt-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[12px] text-bruma">
+            <span>Pendiente: cada día cuesta {dailyCost} de balance.</span>
+            {onAbandon && (
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  sound.playTap();
+                  onAbandon(task);
+                }}
+                onKeyDown={e => e.stopPropagation()}
+                className="underline decoration-trazo underline-offset-4 hover:text-tinta"
+              >
+                Abandonar
+              </button>
+            )}
+          </div>
+        )}
+
+        {locked && task.proof?.photo && (
+          <img
+            src={task.proof.photo}
+            alt="Foto de prueba"
+            className="mt-2 h-14 w-14 rounded-xl object-cover ring-1 ring-trazo"
+          />
+        )}
       </div>
 
       <div className="shrink-0 text-right leading-tight">

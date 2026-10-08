@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Task, EnergyType } from '../types';
 import { TaskCard } from './TaskCard';
+import { BarrierPicker } from './BarrierPicker';
+import { BarrierDraft, EMPTY_DRAFT, draftToBarrier } from '../game/barriers';
 import { sound } from '../services/sound';
-import { Plus, X } from 'lucide-react';
+import { Plus, ShieldCheck, X } from 'lucide-react';
 
 interface Props {
   tasks: Task[];
@@ -11,6 +13,8 @@ interface Props {
   onActivateMultiplier: () => void;
   onToggleComplete: (task: Task) => void;
   onAddTask: (newTask: Omit<Task, 'id' | 'isCompleted'>) => void;
+  onAbandon: (task: Task) => void;
+  onOpenPermissions: () => void;
 }
 
 const FILTERS: Array<{ id: 'all' | EnergyType; label: string }> = [
@@ -31,6 +35,8 @@ export const TaskList: React.FC<Props> = ({
   onActivateMultiplier,
   onToggleComplete,
   onAddTask,
+  onAbandon,
+  onOpenPermissions,
 }) => {
   const [filter, setFilter] = useState<'all' | EnergyType>('all');
   const [isAddingTask, setIsAddingTask] = useState<boolean>(false);
@@ -39,6 +45,8 @@ export const TaskList: React.FC<Props> = ({
   const [newCategory, setNewCategory] = useState<EnergyType>('enfoque');
   const [newIsHighPriority, setNewIsHighPriority] = useState(false);
   const [newReward, setNewReward] = useState(35);
+  const [draft, setDraft] = useState<BarrierDraft>(EMPTY_DRAFT);
+  const barrier = draftToBarrier(draft);
 
   const filteredTasks = tasks.filter(t => (filter === 'all' ? true : t.category === filter));
   const doneCount = tasks.filter(t => t.isCompleted).length;
@@ -47,7 +55,7 @@ export const TaskList: React.FC<Props> = ({
 
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim()) return;
+    if (!newTitle.trim() || barrier === 'incomplete') return;
 
     sound.playTap();
     onAddTask({
@@ -57,10 +65,13 @@ export const TaskList: React.FC<Props> = ({
       energyReward: Number(newReward) || 30,
       isHighPriority: newIsHighPriority,
       isDaily: false,
+      ...(barrier ? { barrier } : {}),
     });
 
     setNewTitle('');
     setNewDesc('');
+    setNewIsHighPriority(false);
+    setDraft(EMPTY_DRAFT);
     setIsAddingTask(false);
   };
 
@@ -79,6 +90,16 @@ export const TaskList: React.FC<Props> = ({
           <p className="tnum mt-1 text-[13px] text-bruma">
             <strong className="font-bold text-tinta">{doneCount}</strong> de {tasks.length} hechas
           </p>
+          <button
+            onClick={() => {
+              sound.playTap();
+              onOpenPermissions();
+            }}
+            className="mt-2 flex items-center gap-1.5 text-[13px] text-bruma underline decoration-trazo underline-offset-4 hover:text-tinta"
+          >
+            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+            Permisos del dispositivo
+          </button>
         </div>
 
         <button
@@ -195,12 +216,18 @@ export const TaskList: React.FC<Props> = ({
             </span>
           </label>
 
+          <BarrierPicker value={draft} onChange={setDraft} />
+
           <button
             type="submit"
-            className="w-full rounded-full bg-jade py-3 text-[15px] font-bold text-lino transition-transform active:scale-[0.98]"
+            disabled={barrier === 'incomplete'}
+            className="w-full rounded-full bg-jade py-3 text-[15px] font-bold text-lino transition-transform active:scale-[0.98] disabled:opacity-50"
           >
             Añadir tarea
           </button>
+          {barrier === 'incomplete' && (
+            <p className="-mt-2 text-center text-[12px] text-bruma">Ancla el lugar para poder añadirla.</p>
+          )}
         </form>
       )}
 
@@ -236,6 +263,7 @@ export const TaskList: React.FC<Props> = ({
                 task={task}
                 multiplierActive={multiplierActive}
                 onToggleComplete={onToggleComplete}
+                onAbandon={onAbandon}
               />
             ))
           )}

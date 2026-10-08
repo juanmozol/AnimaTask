@@ -14,6 +14,16 @@ import { FamilyReconnectionView } from './components/FamilyReconnectionView';
 import { FamilyReconnectionModal } from './components/FamilyReconnectionModal';
 import { EvolutionModal } from './components/EvolutionModal';
 import { ExportModal } from './components/ExportModal';
+import { ModesView } from './components/ModesView';
+import { ModeSession } from './components/ModeSession';
+import { DisconnectMode, ModeOption, ModeResult, ModeRun, nextStreak, streakBonus } from './game/modes';
+import { PermissionsSheet } from './components/PermissionsSheet';
+import { PlaceProofSheet } from './components/PlaceProofSheet';
+import { MoveChallengeSheet } from './components/MoveChallengeSheet';
+import { OfflineBlockSheet, useOfflineGuard } from './components/OfflineBlockSheet';
+import { AbandonSheet } from './components/AbandonSheet';
+import { OfflineRun } from './game/barriers';
+import { TaskProof } from './types';
 import { sound } from './services/sound';
 
 // localStorage can throw (blocked storage, private mode, some in-app browsers,
@@ -88,7 +98,7 @@ function migrateCreature(saved: Partial<CreatureState>): CreatureState {
 
 export default function App() {
   // Navigation tab
-  const [currentTab, setCurrentTab] = useState<'creature' | 'tasks' | 'camera' | 'family'>('creature');
+  const [currentTab, setCurrentTab] = useState<'creature' | 'tasks' | 'modes' | 'camera' | 'family'>('creature');
 
   // Creature State
   const [creature, setCreature] = useState<CreatureState>(() => {
@@ -122,7 +132,43 @@ export default function App() {
   const [activeCameraMission, setActiveCameraMission] = useState<CameraMission | null>(null);
   const [showFamilyModal, setShowFamilyModal] = useState<boolean>(false);
   const [showEvolutionModal, setShowEvolutionModal] = useState<boolean>(false);
+
+  // Disconnect modes (simulated blocking)
+  const [modeRun, setModeRun] = useState<ModeRun | null>(null);
+  const [modeResult, setModeResult] = useState<ModeResult | null>(null);
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
+
+  // Barriers: the task whose barrier sheet is open, the one being abandoned, the airplane-mode block
+  const [offlineRun, setOfflineRun] = useState<OfflineRun | null>(() => loadSaved<OfflineRun>('animatask_offline_run'));
+  const [offlineBroken, setOfflineBroken] = useState(false);
+  const [barrierTaskId, setBarrierTaskId] = useState<string | null>(() => offlineRun?.taskId ?? null);
+  const [abandonTaskId, setAbandonTaskId] = useState<string | null>(null);
+  const [showPermissions, setShowPermissions] = useState(false);
+
+  const barrierTask = tasks.find(t => t.id === barrierTaskId) ?? null;
+  const abandonTask = tasks.find(t => t.id === abandonTaskId) ?? null;
+  const runTask = offlineRun ? tasks.find(t => t.id === offlineRun.taskId) : undefined;
+
+  // The airplane-mode block is watched from here, so closing its sheet does not switch the watch off.
+  useOfflineGuard(offlineRun, runTask?.barrier?.kind === 'offline' ? runTask.barrier.minutes : 0, () => {
+    setCreature(prev => ({ ...prev, balance: clampBalance(prev.balance + BALANCE.barrierBreak) }));
+    setOfflineBroken(true);
+    setBarrierTaskId(offlineRun ? offlineRun.taskId : null);
+    setOfflineRun(null);
+  });
+
+  useEffect(() => {
+    if (offlineRun && (!runTask || runTask.isCompleted)) setOfflineRun(null);
+  }, [offlineRun, runTask]);
+
+  useEffect(() => {
+    try {
+      if (offlineRun) localStorage.setItem('animatask_offline_run', JSON.stringify(offlineRun));
+      else localStorage.removeItem('animatask_offline_run');
+    } catch {
+      /* persistence is best-effort */
+    }
+  }, [offlineRun]);
 
   // Sync to localStorage
   useEffect(() => {
@@ -150,7 +196,7 @@ export default function App() {
     gameRef.current = next; // guards against a double call before the next render
     setGame(next);
     setCreature(prev => ({ ...prev, balance: clampBalance(prev.balance + report.delta) }));
-    setTasks(prev => prev.map(t => (t.isDaily ? { ...t, isCompleted: false, awardedEnergy: undefined } : t)));
+    setTasks(prev => prev.map(t => (t.isDaily ? { ...t, isCompleted: false, awardedEnergy: undefined, proof: undefined } : t)));
     setDayReport(report);
   };
 
@@ -251,7 +297,15 @@ export default function App() {
   };
 
   // Task completion toggle
-  const handleToggleTask = (task: Task) => {
+  const handleToggleTask = (task: Task, proof?: TaskProof) => {
+    // A task with a barrier is never ticked by hand and never undone: it opens its barrier.
+    if (task.barrier && !proof) {
+      if (!task.isCompleted) {
+        setOfflineBroken(false);
+        setBarrierTaskId(task.id);
+      }
+      return;
+    }
     const isNowCompleted = !task.isCompleted;
 
     if (isNowCompleted) {
@@ -259,7 +313,7 @@ export default function App() {
       const points = isBoosted ? task.energyReward * 2 : task.energyReward;
 
       setTasks(prev =>
-        prev.map(t => (t.id === task.id ? { ...t, isCompleted: true, awardedEnergy: points } : t))
+        prev.map(t => (t.id === task.id ? { ...t, isCompleted: true, awardedEnergy: points, ...(proof ? { proof } : {}) } : t))
       );
 
       sound.playTaskComplete(isBoosted);
@@ -288,6 +342,23 @@ export default function App() {
         balance: clampBalance(prev.balance - taskBalance(task)),
       }));
     }
+  };
+
+  // A barrier was passed: close its sheet and complete the task with the proof it recorded.
+  const handleBarrierDone = (task: Task, proof: TaskProof) => {
+    setBarrierTaskId(null);
+    setOfflineRun(null);
+    setOfflineBroken(false);
+    handleToggleTask(task, proof);
+  };
+
+  // Giving up a task with a barrier costs balance: the Shadow grows.
+  const handleAbandonTask = (task: Task) => {
+    const penalty = task.isHighPriority ? BALANCE.abandonPriority : BALANCE.abandon;
+    setTasks(prev => prev.filter(t => t.id !== task.id));
+    setCreature(prev => ({ ...prev, balance: clampBalance(prev.balance + penalty) }));
+    if (offlineRun?.taskId === task.id) setOfflineRun(null);
+    setAbandonTaskId(null);
   };
 
   // Add custom task
@@ -323,6 +394,34 @@ export default function App() {
       isEvolutionLocked: false,
       lockReason: undefined,
     }));
+  };
+
+  // Disconnect modes
+  const handleStartMode = (mode: DisconnectMode, option: ModeOption) => {
+    setModeResult(null);
+    setModeRun({ mode, option, startedAt: Date.now() });
+  };
+
+  const handleFinishMode = (exits: number) => {
+    if (!modeRun) return;
+    const g = gameRef.current;
+    const streak = nextStreak(g);
+    const bonus = streakBonus(streak);
+    const energy = modeRun.option.energy + bonus;
+
+    grantEnergy(modeRun.mode.category, energy, BALANCE.mode);
+    const next: GameClock = { ...g, lastModeDay: g.lastDay, streak };
+    gameRef.current = next;
+    setGame(next);
+
+    sound.playTaskComplete(true);
+    setModeResult({ modeName: modeRun.mode.name, category: modeRun.mode.category, energy, bonus, streak, exits });
+    setModeRun(null);
+  };
+
+  const handleAbandonMode = () => {
+    setCreature(prev => ({ ...prev, balance: clampBalance(prev.balance + BALANCE.modeAbandoned) }));
+    setModeRun(null);
   };
 
   // Evolution confirmation
@@ -398,6 +497,7 @@ export default function App() {
       localStorage.removeItem('animatask_tasks');
       localStorage.removeItem('animatask_moments');
       localStorage.removeItem('animatask_game');
+      localStorage.removeItem('animatask_offline_run');
     } catch {
       /* storage unavailable: nothing to clear */
     }
@@ -447,7 +547,16 @@ export default function App() {
             onActivateMultiplier={() => activateMultiplier(180)}
             onToggleComplete={handleToggleTask}
             onAddTask={handleAddTask}
+            onAbandon={task => setAbandonTaskId(task.id)}
+            onOpenPermissions={() => setShowPermissions(true)}
           />
+        </div>
+      )}
+
+      {/* TAB: DISCONNECT MODES */}
+      {currentTab === 'modes' && (
+        <div className="animate-fade-in px-5 pt-2">
+          <ModesView game={game} onStart={handleStartMode} />
         </div>
       )}
 
@@ -505,6 +614,65 @@ export default function App() {
       {showExportModal && (
         <ExportModal onClose={() => setShowExportModal(false)} />
       )}
+      {/* DISCONNECT MODE: running timer, then the result */}
+      {(modeRun || modeResult) && (
+        <ModeSession
+          key={modeRun ? modeRun.startedAt : 'result'}
+          run={modeRun}
+          result={modeResult}
+          creatureName={creature.name}
+          onFinish={handleFinishMode}
+          onAbandon={handleAbandonMode}
+          onCloseResult={() => setModeResult(null)}
+        />
+      )}
+      {/* BARRIERS: one sheet per kind, plus permissions and abandoning */}
+      {barrierTask?.barrier?.kind === 'place' && (
+        <PlaceProofSheet
+          key={barrierTask.id}
+          task={barrierTask}
+          barrier={barrierTask.barrier}
+          onDone={proof => handleBarrierDone(barrierTask, proof)}
+          onClose={() => setBarrierTaskId(null)}
+        />
+      )}
+      {barrierTask?.barrier?.kind === 'move' && (
+        <MoveChallengeSheet
+          key={barrierTask.id}
+          task={barrierTask}
+          barrier={barrierTask.barrier}
+          onDone={proof => handleBarrierDone(barrierTask, proof)}
+          onClose={() => setBarrierTaskId(null)}
+        />
+      )}
+      {barrierTask?.barrier?.kind === 'offline' && (
+        <OfflineBlockSheet
+          key={barrierTask.id}
+          task={barrierTask}
+          barrier={barrierTask.barrier}
+          run={offlineRun}
+          broken={offlineBroken}
+          onStart={() => {
+            setOfflineBroken(false);
+            setOfflineRun({ taskId: barrierTask.id, startedAt: Date.now() });
+          }}
+          onRetry={() => setOfflineBroken(false)}
+          onComplete={proof => handleBarrierDone(barrierTask, proof)}
+          onClose={() => {
+            setBarrierTaskId(null);
+            setOfflineBroken(false);
+          }}
+        />
+      )}
+      {abandonTask && (
+        <AbandonSheet
+          key={abandonTask.id}
+          task={abandonTask}
+          onConfirm={() => handleAbandonTask(abandonTask)}
+          onClose={() => setAbandonTaskId(null)}
+        />
+      )}
+      {showPermissions && <PermissionsSheet onClose={() => setShowPermissions(false)} />}
       {/* END-OF-DAY REPORT (portal: escapes the frame's stacking context so it sits above the header) */}
       {dayReport && createPortal(
         <div

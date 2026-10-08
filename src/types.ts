@@ -55,6 +55,24 @@ export interface Task {
   completedAt?: string;
   awardedEnergy?: number; // Energy actually granted on completion (so unchecking refunds the exact amount)
   isDaily: boolean;
+  barrier?: TaskBarrier; // Set when the task was created: it can only be completed by passing the barrier
+  proof?: TaskProof; // What the barrier recorded when it was passed
+}
+
+export type MoveKind = 'saltos' | 'trote';
+
+// A barrier is chosen when the task is created and cannot be weakened afterwards.
+export type TaskBarrier =
+  | { kind: 'place'; label: string; lat: number; lng: number; radius: number } // live photo inside a radius (meters)
+  | { kind: 'move'; move: MoveKind; reps: number } // physical challenge counted with the motion sensor
+  | { kind: 'offline'; minutes: number }; // phone stays offline (airplane mode) for a block
+
+export interface TaskProof {
+  at: string; // ISO time
+  photo?: string; // small JPEG data URL
+  lat?: number;
+  lng?: number;
+  accuracy?: number; // meters
 }
 
 export interface CameraMission {

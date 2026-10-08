@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { sound } from '../services/sound';
 import { CreatureAlignment } from '../types';
-import { Volume2, VolumeX, SlidersHorizontal, PawPrint, ListChecks, Camera, Users } from 'lucide-react';
+import { Volume2, VolumeX, SlidersHorizontal, PawPrint, ListChecks, Timer, Camera, Users } from 'lucide-react';
 
-type Tab = 'creature' | 'tasks' | 'camera' | 'family';
+type Tab = 'creature' | 'tasks' | 'modes' | 'camera' | 'family';
 
 interface Props {
   currentTab: Tab;
@@ -28,6 +28,7 @@ const PATHS: Array<{ id: CreatureAlignment; label: string; title: string; active
 const NAV_ITEMS: Array<{ id: Tab; label: string; icon: React.ComponentType<{ className?: string; strokeWidth?: number }> }> = [
   { id: 'creature', label: 'Criatura', icon: PawPrint },
   { id: 'tasks', label: 'Tareas', icon: ListChecks },
+  { id: 'modes', label: 'Modos', icon: Timer },
   { id: 'camera', label: 'Cámara AR', icon: Camera },
   { id: 'family', label: 'Familia', icon: Users },
 ];
@@ -193,7 +194,7 @@ export const AppShell: React.FC<Props> = ({
 
         <nav
           aria-label="Secciones"
-          className="fixed bottom-0 left-1/2 z-30 grid w-full max-w-[440px] -translate-x-1/2 grid-cols-4 border-t border-trazo bg-arena px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5"
+          className="fixed bottom-0 left-1/2 z-30 grid w-full max-w-[440px] -translate-x-1/2 grid-cols-5 border-t border-trazo bg-arena px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5"
         >
           {NAV_ITEMS.map(item => {
             const isActive = currentTab === item.id;
