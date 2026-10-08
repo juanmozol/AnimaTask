@@ -1,0 +1,6 @@
+{
+  "name": "AnimaTask",
+  "description": "Prototipo interactivo móvil de gamificación de tareas donde tus hábitos diarios evolucionan criaturas originales mediante energías de Enfoque, Familia, Creatividad y Actividad.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

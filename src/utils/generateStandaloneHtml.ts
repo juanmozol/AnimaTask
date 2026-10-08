@@ -1,0 +1,541 @@
+/**
+ * Generates an ultra-clean, self-contained single-file HTML bundle (HTML + embedded CSS + embedded JS)
+ * that runs seamlessly on GitHub Pages without any npm build step, bundler, or server.
+ */
+
+export function generateStandaloneHtml(): string {
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AnimaTask - Gamificación de Hábitos & Evolución de Criaturas</title>
+  <meta name="description" content="Prototipo interactivo móvil de gamificación de tareas donde tus hábitos reales evolucionan criaturas originales." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            display: ['"Outfit"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    h1, h2, h3, h4, .font-display { font-family: 'Outfit', sans-serif; }
+    /* Custom scrollbars */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    @keyframes pulseSlow { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+    @keyframes floatCreature { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
+    .animate-float { animation: floatCreature 3.5s ease-in-out infinite; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-2 sm:p-4 select-none">
+  <div id="app" class="w-full max-w-md mx-auto">
+    <!-- El contenido interactivo completo se monta aquí -->
+  </div>
+
+  <script>
+    // Audio Synthesizer (Web Audio API)
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+      }
+      init() {
+        if (!this.ctx && (window.AudioContext || window.webkitAudioContext)) {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+      }
+      playTap() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.frequency.setValueAtTime(500, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(250, this.ctx.currentTime + 0.04);
+        gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.04);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(); osc.stop(this.ctx.currentTime + 0.05);
+      }
+      playComplete(isBoost = false) {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const freqs = isBoost ? [523.25, 659.25, 783.99, 1046.5, 1318.5] : [523.25, 659.25, 783.99, 1046.5];
+        freqs.forEach((f, i) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = isBoost ? 'triangle' : 'sine';
+          osc.frequency.setValueAtTime(f, now + i * 0.06);
+          gain.gain.setValueAtTime(0, now + i * 0.06);
+          gain.gain.linearRampToValueAtTime(0.2, now + i * 0.06 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.35);
+          osc.connect(gain); gain.connect(this.ctx.destination);
+          osc.start(now + i * 0.06); osc.stop(now + i * 0.06 + 0.4);
+        });
+      }
+      playEvolution() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        [440, 554, 659, 880, 1108].forEach((f, i) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(f, now + i * 0.12);
+          gain.gain.setValueAtTime(0, now + i * 0.12);
+          gain.gain.linearRampToValueAtTime(0.3, now + i * 0.12 + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.45);
+          osc.connect(gain); gain.connect(this.ctx.destination);
+          osc.start(now + i * 0.12); osc.stop(now + i * 0.12 + 0.5);
+        });
+      }
+      playCamera() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(1000, now);
+        osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.06);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(); osc.stop(now + 0.07);
+      }
+    }
+    const sound = new SoundEngine();
+
+    // App State
+    let state = {
+      tab: 'creature', // 'creature' | 'tasks' | 'camera' | 'family'
+      multiplierActive: false,
+      multiplierSeconds: 0,
+      filter: 'all',
+      isEvolving: false,
+      showCameraModal: false,
+      showFamilyModal: false,
+      cameraMissionIndex: 0,
+      creature: {
+        name: 'Ovo Astra',
+        title: 'Huevo Primordial',
+        tier: 0,
+        branch: 'neutral',
+        totalEnergy: 45,
+        nextThreshold: 100,
+        isLocked: false,
+        energies: { enfoque: 20, familia: 10, creativo: 10, activo: 5 }
+      },
+      tasks: [
+        { id: 1, title: 'Deberes de la Universidad: Proyecto', cat: 'enfoque', pts: 40, priority: true, done: false },
+        { id: 2, title: 'Cena familiar sin móviles', cat: 'familia', pts: 35, priority: false, done: false },
+        { id: 3, title: 'Boceto de arte o dibujo libre', cat: 'creativo', pts: 30, priority: false, done: false },
+        { id: 4, title: '30 min de ejercicio o caminata', cat: 'activo', pts: 35, priority: false, done: false }
+      ],
+      familyMoments: [
+        { title: 'Paseo al atardecer sin pantallas', note: 'Caminamos 25 min conversando sobre la semana.', parent: 'Mamá & Papá', emotion: 'Conectados' }
+      ]
+    };
+
+    // Calculate dominant energy
+    function getDominant() {
+      const e = state.creature.energies;
+      let maxK = 'enfoque';
+      let maxV = -1;
+      for (const k in e) {
+        if (e[k] > maxV) { maxV = e[k]; maxK = k; }
+      }
+      return maxK;
+    }
+
+    // Creature catalog
+    const CATALOG = {
+      '0_neutral': { name: 'Ovo Astra', title: 'Huevo Primordial', desc: 'Un huevo místico con runas doradas que palpita con tus hábitos.', ability: 'Resonancia Inicial', color: '#6366f1' },
+      '1_neutral': { name: 'Lumikid', title: 'Brote Místico', desc: 'Criatura infante adaptable. Absorbe energías y busca anclaje familiar.', ability: 'Metamorfosis Receptiva', color: '#10b981' },
+      '2_enfoque': { name: 'Chronowl', title: 'Búho de Cronos', desc: 'Guardián del enfoque y astrolabio estelar.', ability: 'Hiper-Concentración Mental', color: '#0ea5e9' },
+      '2_familia': { name: 'Kindor', title: 'Guardián del Hogar', desc: 'Noble ser de piedra volcánica suave y brasa protectora.', ability: 'Escudo de Empatía Familiar', color: '#f43f5e' },
+      '2_creativo': { name: 'Prismaris', title: 'Zorro Prisma', desc: 'Zorro de colas etéreas que desprenden destellos de acuarela.', ability: 'Pincelada Ilusoria', color: '#a855f7' },
+      '2_activo': { name: 'Voltkin', title: 'Guepardo Voltio', desc: 'Felino veloz que transmuta movimiento en arcos de relámpago.', ability: 'Sobrecarga Motora', color: '#10b981' },
+      '3_enfoque': { name: 'Chronos-Apex', title: 'Soberano del Tiempo Alfa', desc: 'Pináculo del enfoque académico y mental supremo.', ability: 'Dominio Cronológico Alfa', color: '#0284c7' },
+      '3_familia': { name: 'Harmonia-Apex', title: 'Titán del Lazo Ancestral Alfa', desc: 'Coloso radiante forjado por la unión familiar.', ability: 'Égida del Amor Inquebrantable', color: '#e11d48' },
+      '3_creativo': { name: 'Prisma-Apex', title: 'Deidad Creadora Alfa', desc: 'Nueve colas de cristal y mandala de auroras boreales.', ability: 'Génesis de Realidades', color: '#9333ea' },
+      '3_activo': { name: 'Tempestas-Apex', title: 'Señor de Tempestad Alfa', desc: 'Titán indomable que desafía cualquier límite físico.', ability: 'Impulso Taquiónico', color: '#059669' }
+    };
+
+    // Render Function
+    function render() {
+      const app = document.getElementById('app');
+      const c = state.creature;
+      const key = \`\${c.tier}_\${c.branch}\`;
+      const info = CATALOG[key] || CATALOG['0_neutral'];
+      const canEvolve = c.totalEnergy >= c.nextThreshold && !c.isLocked;
+
+      app.innerHTML = \`
+        <!-- Mobile Frame Container -->
+        <div class="relative w-full bg-slate-900 border-4 border-slate-800 rounded-[40px] shadow-2xl overflow-hidden flex flex-col min-h-[680px]">
+          
+          <!-- Top Status Bar & Dynamic Island -->
+          <div class="px-5 pt-3 pb-2 flex items-center justify-between text-xs text-slate-400 border-b border-slate-800/80 bg-slate-950/40">
+            <span class="font-bold text-white tracking-wide">09:41</span>
+            
+            <!-- Dynamic Island Capsule -->
+            <div class="px-3 py-1 rounded-full bg-black border border-white/10 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full \${state.multiplierActive ? 'bg-amber-400 animate-ping' : 'bg-emerald-400'}"></span>
+              <span class="text-[10px] font-semibold text-white tracking-wider">
+                \${state.multiplierActive ? 'x2 BOOST ACTIVO' : 'ANIMATASK'}
+              </span>
+            </div>
+
+            <div class="flex items-center gap-1.5 font-bold">
+              <span>98%</span>
+            </div>
+          </div>
+
+          <!-- Main Scrollable Screen Content -->
+          <div class="flex-1 p-4 overflow-y-auto space-y-4">
+            
+            \${state.tab === 'creature' ? renderCreatureTab(c, info, canEvolve) : ''}
+            \${state.tab === 'tasks' ? renderTasksTab() : ''}
+            \${state.tab === 'camera' ? renderCameraTab() : ''}
+            \${state.tab === 'family' ? renderFamilyTab() : ''}
+
+          </div>
+
+          <!-- Bottom Navigation Bar (Thumb-Zone Ergonomics) -->
+          <div class="p-2 bg-slate-950/90 border-t border-slate-800 grid grid-cols-4 gap-1">
+            <button onclick="setTab('creature')" class="py-2 flex flex-col items-center rounded-xl transition-all \${state.tab === 'creature' ? 'bg-white/10 text-white font-bold' : 'text-slate-400 hover:text-white'}">
+              <span class="text-lg">🐾</span>
+              <span class="text-[10px] mt-0.5">Criatura</span>
+            </button>
+            <button onclick="setTab('tasks')" class="py-2 flex flex-col items-center rounded-xl transition-all \${state.tab === 'tasks' ? 'bg-white/10 text-white font-bold' : 'text-slate-400 hover:text-white'}">
+              <span class="text-lg">📋</span>
+              <span class="text-[10px] mt-0.5">Tareas</span>
+            </button>
+            <button onclick="setTab('camera')" class="py-2 flex flex-col items-center rounded-xl transition-all \${state.tab === 'camera' ? 'bg-white/10 text-white font-bold' : 'text-slate-400 hover:text-white'}">
+              <span class="text-lg">📷</span>
+              <span class="text-[10px] mt-0.5">Cámara AR</span>
+            </button>
+            <button onclick="setTab('family')" class="py-2 flex flex-col items-center rounded-xl transition-all \${state.tab === 'family' ? 'bg-white/10 text-white font-bold' : 'text-slate-400 hover:text-white'}">
+              <span class="text-lg">👨‍👩‍👧</span>
+              <span class="text-[10px] mt-0.5">Familia</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Modals -->
+        \${state.isEvolving ? renderEvolutionModal(info) : ''}
+        \${state.showCameraModal ? renderCameraScanModal() : ''}
+        \${state.showFamilyModal ? renderFamilyMomentModal() : ''}
+      \`;
+    }
+
+    function renderCreatureTab(c, info, canEvolve) {
+      return \`
+        <!-- Sanctuary Habitat Card -->
+        <div onclick="petCreature()" class="relative w-full h-60 rounded-3xl bg-gradient-to-b from-indigo-950/60 to-slate-900 border border-indigo-500/30 flex flex-col items-center justify-center cursor-pointer overflow-hidden group shadow-lg">
+          <div class="absolute top-3 left-4 right-4 flex justify-between items-center text-xs">
+            <span class="px-2.5 py-1 rounded-full bg-slate-950/60 border border-white/10 text-cyan-300 font-semibold">
+              Etapa \${c.tier}: \${c.tier === 0 ? 'Huevo' : c.tier === 1 ? 'Brote' : c.tier === 2 ? 'Rama Especializada' : 'Forma Alfa'}
+            </span>
+            <span class="px-2.5 py-1 rounded-full bg-slate-950/60 border border-white/10 text-amber-300 font-bold">
+              \${c.totalEnergy} / \${c.nextThreshold} pts
+            </span>
+          </div>
+
+          <!-- Dynamic Animated Avatar -->
+          <div class="animate-float my-2">
+            <div class="w-32 h-32 rounded-3xl flex items-center justify-center text-6xl shadow-2xl border-2 border-white/20" style="background: radial-gradient(circle, \${info.color}60, #0f172a)">
+              \${c.tier === 0 ? '🥚' : c.tier === 1 ? '🌱' : c.branch === 'enfoque' ? '🦉' : c.branch === 'familia' ? '💖' : c.branch === 'creativo' ? '🦊' : '⚡'}
+            </div>
+          </div>
+
+          <span class="text-[11px] text-slate-400 font-medium tracking-wide">Toca para interactuar</span>
+        </div>
+
+        <!-- Identity & Evolution Card -->
+        <div class="p-4 bg-slate-900/90 border border-slate-800 rounded-2xl space-y-2">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold text-white">\${info.name}</h2>
+              <p class="text-xs text-slate-400">\${info.title}</p>
+            </div>
+            \${c.isLocked ? \`
+              <button onclick="state.showFamilyModal = true; render();" class="px-3 py-1.5 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-bold animate-pulse">
+                🔒 Bloqueo Familiar
+              </button>
+            \` : canEvolve ? \`
+              <button onclick="triggerEvolution()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-indigo-600 text-white text-xs font-black shadow-lg animate-bounce">
+                ¡EVOLUCIONAR!
+              </button>
+            \` : \`
+              <span class="text-xs text-slate-400 font-mono">Faltan \${Math.max(0, c.nextThreshold - c.totalEnergy)} pts</span>
+            \`}
+          </div>
+
+          <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-cyan-400 via-purple-400 to-rose-400 rounded-full transition-all duration-500" style="width: \${Math.min(100, (c.totalEnergy / c.nextThreshold) * 100)}%"></div>
+          </div>
+
+          <p class="text-xs text-slate-300 leading-relaxed pt-1">
+            <strong class="text-white">Poder:</strong> \${info.ability}
+          </p>
+        </div>
+
+        <!-- Energy Matrix Bars -->
+        <div class="p-4 bg-slate-900/90 border border-slate-800 rounded-2xl space-y-2.5">
+          <h4 class="text-xs font-bold text-white uppercase tracking-wider">Matriz de Energías Esenciales</h4>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="p-2.5 rounded-xl bg-cyan-950/40 border border-cyan-800/40">
+              <span class="text-cyan-400 font-bold">🎯 Enfoque: \${c.energies.enfoque} pts</span>
+            </div>
+            <div class="p-2.5 rounded-xl bg-rose-950/40 border border-rose-800/40">
+              <span class="text-rose-400 font-bold">👨‍👩‍👧 Familia: \${c.energies.familia} pts</span>
+            </div>
+            <div class="p-2.5 rounded-xl bg-purple-950/40 border border-purple-800/40">
+              <span class="text-purple-400 font-bold">🎨 Creativo: \${c.energies.creativo} pts</span>
+            </div>
+            <div class="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-800/40">
+              <span class="text-emerald-400 font-bold">⚡ Activo: \${c.energies.activo} pts</span>
+            </div>
+          </div>
+        </div>
+      \`;
+    }
+
+    function renderTasksTab() {
+      return \`
+        <!-- Multiplier x2 Banner -->
+        <div class="p-3.5 rounded-2xl border \${state.multiplierActive ? 'bg-amber-950/40 border-amber-500/50' : 'bg-slate-900/80 border-slate-800'} flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-sm">🔥</span>
+              <h4 class="text-xs font-bold text-white">Multiplicador x2</h4>
+              \${state.multiplierActive ? '<span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500 text-slate-950 font-black">ACTIVO</span>' : ''}
+            </div>
+            <p class="text-[11px] text-slate-400">Tareas universitarias o de alta prioridad duplican energía.</p>
+          </div>
+          <button onclick="toggleMultiplier()" class="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/40">
+            \${state.multiplierActive ? 'Desactivar' : 'Activar x2'}
+          </button>
+        </div>
+
+        <!-- Task List -->
+        <div class="space-y-2">
+          \${state.tasks.map(t => \`
+            <div onclick="completeTask(\${t.id})" class="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 cursor-pointer flex items-center justify-between gap-3 \${t.done ? 'opacity-50' : ''}">
+              <div class="flex items-center gap-3">
+                <div class="w-6 h-6 rounded-lg border-2 \${t.done ? 'bg-emerald-500 border-emerald-500 text-slate-950 font-bold flex items-center justify-center text-xs' : 'border-slate-700'}">
+                  \${t.done ? '✓' : ''}
+                </div>
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-semibold \${t.done ? 'line-through text-slate-500' : 'text-white'}">\${t.title}</span>
+                    \${t.priority ? '<span class="text-[9px] px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">x2</span>' : ''}
+                  </div>
+                  <span class="text-[10px] text-slate-400 capitalize">\${t.cat}</span>
+                </div>
+              </div>
+              <span class="text-xs font-bold font-mono text-cyan-300 bg-slate-800 px-2 py-1 rounded-lg">
+                +\${state.multiplierActive || t.priority ? t.pts * 2 : t.pts} pts
+              </span>
+            </div>
+          \`).join('')}
+        </div>
+      \`;
+    }
+
+    function renderCameraTab() {
+      return \`
+        <div class="p-4 rounded-3xl bg-gradient-to-br from-purple-900/60 to-slate-900 border border-purple-500/30 space-y-2 shadow-lg">
+          <span class="px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-bold">Desafío del Mundo Real</span>
+          <h3 class="text-base font-bold text-white">Misiones de Cámara Creativa</h3>
+          <p class="text-xs text-slate-300">Explora tu entorno físico y escanea elementos para alimentar a tu criatura.</p>
+        </div>
+
+        <div onclick="state.showCameraModal = true; render();" class="p-4 rounded-2xl bg-slate-900 border border-purple-500/40 hover:border-purple-400 cursor-pointer flex items-center justify-between">
+          <div>
+            <h4 class="text-xs font-bold text-white">Desafío Cromático: Algo Morado</h4>
+            <p class="text-[11px] text-slate-400 mt-0.5">Encuentra y fotografía cualquier objeto violeta a tu alrededor.</p>
+          </div>
+          <span class="px-3 py-1.5 rounded-xl bg-purple-600 text-white text-xs font-bold shadow-md">
+            Escanear
+          </span>
+        </div>
+      \`;
+    }
+
+    function renderFamilyTab() {
+      return \`
+        <div class="p-4 rounded-3xl bg-gradient-to-br from-rose-950/70 to-slate-900 border border-rose-500/30 space-y-2 shadow-lg">
+          <span class="px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-300 text-[10px] font-bold">Paternidad Presente</span>
+          <h3 class="text-base font-bold text-white">Módulo de Reconexión Familiar</h3>
+          <p class="text-xs text-rose-200">Previene la adicción a pantallas exigiendo tiempo de calidad compartido.</p>
+          <button onclick="state.showFamilyModal = true; render();" class="mt-2 px-3.5 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold shadow-md">
+            Registrar Momento de Calidad
+          </button>
+        </div>
+
+        <div class="space-y-2">
+          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">Recuerdos Guardados</h4>
+          \${state.familyMoments.map(m => \`
+            <div class="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-1">
+              <div class="flex justify-between items-center">
+                <h5 class="text-xs font-bold text-white">\${m.title}</h5>
+                <span class="text-[10px] text-rose-300 bg-rose-950 px-2 py-0.5 rounded-full">\${m.emotion}</span>
+              </div>
+              <p class="text-xs text-slate-300 italic">"\${m.note}"</p>
+              <span class="text-[10px] text-slate-500 block pt-1 border-t border-slate-800">Firmado por: \${m.parent}</span>
+            </div>
+          \`).join('')}
+        </div>
+      \`;
+    }
+
+    function renderEvolutionModal(info) {
+      return \`
+        <div class="fixed inset-0 z-50 bg-slate-950/95 flex items-center justify-center p-4">
+          <div class="max-w-sm w-full bg-slate-900 border border-white/20 rounded-3xl p-6 text-center space-y-4 shadow-2xl">
+            <span class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-black">¡EVOLUCIÓN EN VIVO!</span>
+            <div class="text-6xl animate-bounce my-2">✨</div>
+            <h2 class="text-2xl font-black text-white">\${info.name}</h2>
+            <p class="text-xs font-semibold text-cyan-400">\${info.title}</p>
+            <p class="text-xs text-slate-300">\${info.desc}</p>
+            <div class="p-3 bg-slate-800 rounded-xl text-left text-xs">
+              <span class="font-bold text-amber-400">Poder:</span> \${info.ability}
+            </div>
+            <button onclick="state.isEvolving = false; render();" class="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-pink-500 text-white font-bold text-xs shadow-lg">
+              Abrazar Nueva Forma
+            </button>
+          </div>
+        </div>
+      \`;
+    }
+
+    function renderCameraScanModal() {
+      return \`
+        <div class="fixed inset-0 z-50 bg-slate-950/90 flex items-center justify-center p-4">
+          <div class="max-w-sm w-full bg-slate-900 border border-purple-500/40 rounded-3xl p-5 space-y-3">
+            <div class="flex justify-between items-center">
+              <h3 class="text-sm font-bold text-white">Sensor Óptico AR</h3>
+              <button onclick="state.showCameraModal = false; render();" class="text-slate-400 hover:text-white">✕</button>
+            </div>
+            <div class="w-full h-48 bg-black rounded-2xl flex flex-col items-center justify-center border border-purple-500/30 relative overflow-hidden">
+              <div class="w-20 h-20 rounded-2xl bg-purple-600/30 border-2 border-purple-400 border-dashed animate-pulse flex items-center justify-center text-3xl">
+                📷
+              </div>
+              <span class="text-[10px] text-cyan-400 font-mono mt-2">[ESCANEANDO PATRÓN CROMÁTICO...]</span>
+            </div>
+            <button onclick="completeCameraMission()" class="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-lg">
+              Tomar Foto y Validar (+50 Creativo)
+            </button>
+          </div>
+        </div>
+      \`;
+    }
+
+    function renderFamilyMomentModal() {
+      return \`
+        <div class="fixed inset-0 z-50 bg-slate-950/90 flex items-center justify-center p-4">
+          <div class="max-w-sm w-full bg-slate-900 border border-rose-900/40 rounded-3xl p-5 space-y-3">
+            <div class="flex justify-between items-center">
+              <h3 class="text-sm font-bold text-white">Momento de Calidad Familiar</h3>
+              <button onclick="state.showFamilyModal = false; render();" class="text-slate-400 hover:text-white">✕</button>
+            </div>
+            <p class="text-xs text-rose-200">Los padres registran este momento para liberar el progreso evolutivo.</p>
+            <input id="parentInput" type="text" value="Papá y Mamá" class="w-full p-2 rounded-xl bg-slate-800 text-xs text-white border border-slate-700" placeholder="Nombre del padre/madre" />
+            <textarea id="noteInput" rows="2" class="w-full p-2 rounded-xl bg-slate-800 text-xs text-white border border-slate-700" placeholder="Reflexión del momento">Conversamos y jugamos 20 minutos sin pantallas.</textarea>
+            <button onclick="saveFamilyMoment()" class="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-lg">
+              Firmar y Desbloquear Evolución (+100 Familia)
+            </button>
+          </div>
+        </div>
+      \`;
+    }
+
+    // Action Handlers
+    window.setTab = (t) => { sound.playTap(); state.tab = t; render(); };
+    window.petCreature = () => { sound.playTap(); render(); };
+    window.toggleMultiplier = () => {
+      sound.playTap();
+      state.multiplierActive = !state.multiplierActive;
+      render();
+    };
+    window.completeTask = (id) => {
+      const task = state.tasks.find(t => t.id === id);
+      if (!task) return;
+      task.done = !task.done;
+      const factor = (state.multiplierActive || task.priority) ? 2 : 1;
+      const pts = task.pts * factor;
+      
+      if (task.done) {
+        sound.playComplete(state.multiplierActive || task.priority);
+        state.creature.energies[task.cat] += pts;
+        state.creature.totalEnergy += pts;
+
+        // Check if egg hatches or sprouter reaches lock
+        if (state.creature.tier === 0 && state.creature.totalEnergy >= state.creature.nextThreshold) {
+          triggerEvolution();
+        } else if (state.creature.tier === 1 && state.creature.totalEnergy >= 250 && !state.creature.isLocked) {
+          // Lock evolution until family moment!
+          state.creature.isLocked = true;
+        }
+      }
+      render();
+    };
+
+    window.triggerEvolution = () => {
+      sound.playEvolution();
+      state.isEvolving = true;
+      const nextTier = state.creature.tier + 1;
+      const dom = getDominant();
+      state.creature.tier = nextTier;
+      state.creature.branch = nextTier === 1 ? 'neutral' : dom;
+      state.creature.nextThreshold = nextTier === 1 ? 250 : nextTier === 2 ? 600 : 1200;
+      render();
+    };
+
+    window.completeCameraMission = () => {
+      sound.playCamera();
+      sound.playComplete(true);
+      state.creature.energies.creativo += 50;
+      state.creature.totalEnergy += 50;
+      state.showCameraModal = false;
+      render();
+    };
+
+    window.saveFamilyMoment = () => {
+      const p = document.getElementById('parentInput')?.value || 'Papá/Mamá';
+      const n = document.getElementById('noteInput')?.value || 'Momento compartido';
+      sound.playComplete(true);
+      state.familyMoments.unshift({ title: 'Momento de Presencia Consciente', note: n, parent: p, emotion: 'Conectados' });
+      state.creature.energies.familia += 100;
+      state.creature.totalEnergy += 100;
+      state.creature.isLocked = false;
+      state.showFamilyModal = false;
+      render();
+    };
+
+    // First render
+    render();
+  </script>
+</body>
+</html>`;
+}
