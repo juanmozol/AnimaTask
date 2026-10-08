@@ -1,4 +1,8 @@
 import { CreatureState, Task, CameraMission, FamilyMoment, EnergyBalance, EvolutionBranch, EvolutionTier, CreatureAlignment, SpeciesEntry } from '../types';
+import imgBaseFawn from '../assets/images/creature_base_fawn_1791421847134.jpg';
+import imgGoodSage from '../assets/images/creature_good_sage_1791421854901.jpg';
+import imgBadSkull from '../assets/images/creature_bad_skull_1791421869821.jpg';
+import imgBadAbyss from '../assets/images/creature_bad_abyss_1791421879174.jpg';
 
 export interface CreatureEvolutionInfo {
   tier: EvolutionTier;
@@ -28,7 +32,7 @@ export const AVAILABLE_SPECIES: SpeciesEntry[] = [
     description: 'Criatura con dos senderos evolutivos marcados: la Senda de la Armonía y la Senda del Abismo Sombrío.',
     hasBipolarPaths: true,
     defaultAlignment: 'harmony',
-    previewImage: '/src/assets/images/creature_base_fawn_1791421847134.jpg',
+    previewImage: imgBaseFawn,
   },
   {
     id: 'chronowl',
@@ -89,7 +93,7 @@ export const CREATURE_CATALOG: Record<string, CreatureEvolutionInfo> = {
     description: 'Pequeña criatura de suave pelaje canela y rayas dorsales blancas. Sus grandes ojos turquesa observan atentos tus acciones del día.',
     specialAbility: 'Ojo de Espejo: Refleja tu constancia en su semblante.',
     lore: 'Nacido en los claros de bosque, le encanta descansar mientras avanzas en tus proyectos.',
-    imageUrl: '/src/assets/images/creature_base_fawn_1791421847134.jpg',
+    imageUrl: imgBaseFawn,
     colors: {
       primary: '#d97706',
       secondary: '#b45309',
@@ -127,7 +131,7 @@ export const CREATURE_CATALOG: Record<string, CreatureEvolutionInfo> = {
     description: 'Majestuoso ser sagrado sentado en calma absoluta. De su espalda brotan llamas espirituales de color turquesa, con un tercer ojo místico y una cola espiral luminosa.',
     specialAbility: 'Espíritu Iluminado Alfa: Estado de flujo mental continuo y bendición de armonía.',
     lore: 'El pináculo del balance interior. Quien alcanza esta forma mantiene sus hábitos con ligereza y paz.',
-    imageUrl: '/src/assets/images/creature_good_sage_1791421854901.jpg',
+    imageUrl: imgGoodSage,
     colors: {
       primary: '#06b6d4',
       secondary: '#0891b2',
@@ -147,7 +151,7 @@ export const CREATURE_CATALOG: Record<string, CreatureEvolutionInfo> = {
     description: 'Thylacine espectral que levita sobre el suelo con una máscara de cráneo óseo y cuencas esmeralda. Flota rodeado de fuegos fatuos fantasmales.',
     specialAbility: 'Velo Sepulcral: Absorbe el estrés y lo transforma en ímpetu nocturno.',
     lore: 'Emerge cuando el cansancio y los desafíos difíciles empujan a la criatura hacia el misterio de la noche.',
-    imageUrl: '/src/assets/images/creature_bad_skull_1791421869821.jpg',
+    imageUrl: imgBadSkull,
     colors: {
       primary: '#10b981',
       secondary: '#047857',
@@ -166,7 +170,7 @@ export const CREATURE_CATALOG: Record<string, CreatureEvolutionInfo> = {
     description: 'Depredador cuadrúpedo de pelaje negro carbón como la noche pura. Sus ojos y su fauce abierta brillan con un abismo cian resplandeciente.',
     specialAbility: 'Fauce del Vacío Alfa: Devora la procrastinación con agresividad voraz.',
     lore: 'Temido por su aspecto salvaje, representa la fuerza bruta nacida de superar las etapas más oscuras y exigentes del camino.',
-    imageUrl: '/src/assets/images/creature_bad_abyss_1791421879174.jpg',
+    imageUrl: imgBadAbyss,
     colors: {
       primary: '#0284c7',
       secondary: '#0f172a',
@@ -484,3 +488,20 @@ export const SAMPLE_FAMILY_MOMENTS: FamilyMoment[] = [
     unlockedEvolution: true,
   },
 ];
+
+/**
+ * Catalog lookup key for a creature. Numbik uses its own dual-path entries
+ * (`numbik_<tier>` and `numbik_<tier>_<alignment>`); every other species
+ * uses the generic `<tier>_<branch>` archetypes.
+ */
+export const getCatalogKey = (
+  speciesId: string | undefined,
+  tier: EvolutionTier,
+  branch: EvolutionBranch,
+  alignment: CreatureAlignment | undefined,
+): string => {
+  if (speciesId === 'numbik') {
+    return tier <= 1 ? `numbik_${tier}` : `numbik_${tier}_${alignment ?? 'harmony'}`;
+  }
+  return `${tier}_${branch}`;
+};

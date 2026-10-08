@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { CreatureState, Task, CameraMission, FamilyMoment, EnergyType, EvolutionBranch, EvolutionTier } from './types';
-import { INITIAL_TASKS, SAMPLE_FAMILY_MOMENTS, CREATURE_CATALOG, CreatureEvolutionInfo } from './data/initialData';
+import { CreatureState, CreatureAlignment, Task, CameraMission, FamilyMoment, EnergyType, EvolutionBranch, EvolutionTier } from './types';
+import { INITIAL_TASKS, SAMPLE_FAMILY_MOMENTS, CREATURE_CATALOG, AVAILABLE_SPECIES, CreatureEvolutionInfo, getCatalogKey } from './data/initialData';
 import { PhoneFrame } from './components/PhoneFrame';
 import { CreatureDisplay } from './components/CreatureDisplay';
 import { EnergyBreakdown } from './components/EnergyBreakdown';
@@ -13,54 +13,90 @@ import { EvolutionModal } from './components/EvolutionModal';
 import { ExportModal } from './components/ExportModal';
 import { sound } from './services/sound';
 
+// localStorage can throw (blocked storage, private mode, some in-app browsers,
+// quota). The app must keep working without persistence instead of crashing.
+function loadSaved<T>(key: string): T | null {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+function save(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    /* persistence is best-effort */
+  }
+}
+
+const DEFAULT_CREATURE: CreatureState = {
+  id: 'companion-1',
+  speciesId: 'numbik',
+  alignment: 'harmony',
+  name: CREATURE_CATALOG['numbik_0'].name,
+  title: CREATURE_CATALOG['numbik_0'].title,
+  tier: 0,
+  branch: 'neutral',
+  description: CREATURE_CATALOG['numbik_0'].description,
+  specialAbility: CREATURE_CATALOG['numbik_0'].specialAbility,
+  energies: {
+    enfoque: 25,
+    familia: 20,
+    creativo: 15,
+    activo: 15,
+  },
+  totalEnergy: 75,
+  nextTierThreshold: 100,
+  isEvolutionLocked: false,
+  mood: 'happy',
+};
+
+// Name, title, description and ability always follow the catalog entry that
+// matches the creature's species / tier / branch / alignment.
+function withCatalogIdentity(c: CreatureState): CreatureState {
+  const info = CREATURE_CATALOG[getCatalogKey(c.speciesId, c.tier, c.branch, c.alignment)];
+  if (!info) return c;
+  return {
+    ...c,
+    branch: info.branch,
+    name: info.name,
+    title: info.title,
+    description: info.description,
+    specialAbility: info.specialAbility,
+  };
+}
+
+// Saves from earlier versions have no speciesId / alignment.
+function migrateCreature(saved: Partial<CreatureState>): CreatureState {
+  const merged = { ...DEFAULT_CREATURE, ...saved } as CreatureState;
+  if (saved.speciesId && saved.alignment) return merged;
+  return withCatalogIdentity({
+    ...merged,
+    speciesId: saved.speciesId ?? 'numbik',
+    alignment: saved.alignment ?? 'harmony',
+  });
+}
+
 export default function App() {
   // Navigation tab
   const [currentTab, setCurrentTab] = useState<'creature' | 'tasks' | 'camera' | 'family'>('creature');
 
   // Creature State
   const [creature, setCreature] = useState<CreatureState>(() => {
-    const saved = localStorage.getItem('animatask_creature');
-    if (saved) {
-      try { return JSON.parse(saved); } catch { /* ignore */ }
-    }
-    return {
-      id: 'companion-1',
-      name: 'Ovo Astra',
-      title: 'Huevo Primordial',
-      tier: 0,
-      branch: 'neutral',
-      description: 'Un huevo místico con runas doradas que palpita con tus hábitos diarios.',
-      specialAbility: 'Resonancia Inicial: Acumula las 4 energías esenciales.',
-      energies: {
-        enfoque: 25,
-        familia: 20,
-        creativo: 15,
-        activo: 15,
-      },
-      totalEnergy: 75,
-      nextTierThreshold: 100,
-      isEvolutionLocked: false,
-      mood: 'happy',
-    };
+    const saved = loadSaved<Partial<CreatureState>>('animatask_creature');
+    return saved ? migrateCreature(saved) : DEFAULT_CREATURE;
   });
 
   // Task list
-  const [tasks, setTasks] = useState<Task[]>(() => {
-    const saved = localStorage.getItem('animatask_tasks');
-    if (saved) {
-      try { return JSON.parse(saved); } catch { /* ignore */ }
-    }
-    return INITIAL_TASKS;
-  });
+  const [tasks, setTasks] = useState<Task[]>(() => loadSaved<Task[]>('animatask_tasks') ?? INITIAL_TASKS);
 
   // Family moments album
-  const [familyMoments, setFamilyMoments] = useState<FamilyMoment[]>(() => {
-    const saved = localStorage.getItem('animatask_moments');
-    if (saved) {
-      try { return JSON.parse(saved); } catch { /* ignore */ }
-    }
-    return SAMPLE_FAMILY_MOMENTS;
-  });
+  const [familyMoments, setFamilyMoments] = useState<FamilyMoment[]>(
+    () => loadSaved<FamilyMoment[]>('animatask_moments') ?? SAMPLE_FAMILY_MOMENTS
+  );
 
   // Multiplier x2 state
   const [multiplierActive, setMultiplierActive] = useState<boolean>(false);
@@ -74,15 +110,15 @@ export default function App() {
 
   // Sync to localStorage
   useEffect(() => {
-    localStorage.setItem('animatask_creature', JSON.stringify(creature));
+    save('animatask_creature', creature);
   }, [creature]);
 
   useEffect(() => {
-    localStorage.setItem('animatask_tasks', JSON.stringify(tasks));
+    save('animatask_tasks', tasks);
   }, [tasks]);
 
   useEffect(() => {
-    localStorage.setItem('animatask_moments', JSON.stringify(familyMoments));
+    save('animatask_moments', familyMoments);
   }, [familyMoments]);
 
   // Countdown timer for x2 Multiplier
@@ -115,9 +151,10 @@ export default function App() {
   // Determine next evolution target
   const getNextEvolutionInfo = (): CreatureEvolutionInfo => {
     const nextTier = (Math.min(3, creature.tier + 1)) as EvolutionTier;
+    // Numbik follows the Senda (alignment) the player chose; other species follow the dominant energy.
     const targetBranch: EvolutionBranch = nextTier === 1 ? 'neutral' : dominantEnergy;
-    const catalogKey = `${nextTier}_${targetBranch}`;
-    return CREATURE_CATALOG[catalogKey] || CREATURE_CATALOG['1_neutral'];
+    const catalogKey = getCatalogKey(creature.speciesId, nextTier, targetBranch, creature.alignment);
+    return CREATURE_CATALOG[catalogKey] || CREATURE_CATALOG['numbik_1'];
   };
 
   const canEvolve = creature.totalEnergy >= creature.nextTierThreshold && !creature.isEvolutionLocked && creature.tier < 3;
@@ -138,7 +175,7 @@ export default function App() {
       const newTotal = prev.totalEnergy + amount;
 
       // Special Paternidad Presente condition:
-      // If Brote (Tier 1) reaches 250 energy and isn't locked, activate mandatory Family Lock!
+      // If Brote (Tier 1) reaches 220 energy and isn't locked, activate mandatory Family Lock!
       let isLocked = prev.isEvolutionLocked;
       let lockReason = prev.lockReason;
       if (prev.tier === 1 && newTotal >= 220 && !prev.isEvolutionLocked && familyMoments.length <= 1) {
@@ -160,14 +197,14 @@ export default function App() {
   const handleToggleTask = (task: Task) => {
     const isNowCompleted = !task.isCompleted;
 
-    setTasks(prev =>
-      prev.map(t => (t.id === task.id ? { ...t, isCompleted: isNowCompleted } : t))
-    );
-
-    const isBoosted = multiplierActive || task.isHighPriority;
-    const points = isBoosted ? task.energyReward * 2 : task.energyReward;
-
     if (isNowCompleted) {
+      const isBoosted = multiplierActive || task.isHighPriority;
+      const points = isBoosted ? task.energyReward * 2 : task.energyReward;
+
+      setTasks(prev =>
+        prev.map(t => (t.id === task.id ? { ...t, isCompleted: true, awardedEnergy: points } : t))
+      );
+
       sound.playTaskComplete(isBoosted);
       grantEnergy(task.category, points);
 
@@ -177,14 +214,20 @@ export default function App() {
         activateMultiplier(180);
       }
     } else {
-      // Revert energy if unchecking
+      // Refund exactly what was granted (the x2 boost may have changed since).
+      const refund = task.awardedEnergy ?? task.energyReward;
+
+      setTasks(prev =>
+        prev.map(t => (t.id === task.id ? { ...t, isCompleted: false, awardedEnergy: undefined } : t))
+      );
+
       setCreature(prev => ({
         ...prev,
         energies: {
           ...prev.energies,
-          [task.category]: Math.max(0, prev.energies[task.category] - points),
+          [task.category]: Math.max(0, prev.energies[task.category] - refund),
         },
-        totalEnergy: Math.max(0, prev.totalEnergy - points),
+        totalEnergy: Math.max(0, prev.totalEnergy - refund),
       }));
     }
   };
@@ -239,10 +282,25 @@ export default function App() {
       title: nextInfo.title,
       tier: nextInfo.tier,
       branch: nextInfo.branch,
+      alignment: nextInfo.alignment ?? prev.alignment,
       description: nextInfo.description,
       specialAbility: nextInfo.specialAbility,
       nextTierThreshold: nextThresholds[nextInfo.tier],
     }));
+  };
+
+  // Senda switch (Numbik): the card follows the chosen path
+  const handleToggleAlignment = (alignment: CreatureAlignment) => {
+    setCreature(prev => (prev.alignment === alignment ? prev : withCatalogIdentity({ ...prev, alignment })));
+  };
+
+  // Active companion switch
+  const handleSelectSpecies = (speciesId: string) => {
+    setCreature(prev => {
+      if (prev.speciesId === speciesId) return prev;
+      const species = AVAILABLE_SPECIES.find(sp => sp.id === speciesId);
+      return withCatalogIdentity({ ...prev, speciesId, alignment: species?.defaultAlignment ?? 'harmony' });
+    });
   };
 
   // Quick Cheat Boost for instantaneous demo verification
@@ -253,9 +311,13 @@ export default function App() {
 
   // Reset demo state
   const handleResetDemo = () => {
-    localStorage.removeItem('animatask_creature');
-    localStorage.removeItem('animatask_tasks');
-    localStorage.removeItem('animatask_moments');
+    try {
+      localStorage.removeItem('animatask_creature');
+      localStorage.removeItem('animatask_tasks');
+      localStorage.removeItem('animatask_moments');
+    } catch {
+      /* storage unavailable: nothing to clear */
+    }
     window.location.reload();
   };
 
@@ -276,6 +338,8 @@ export default function App() {
             canEvolve={canEvolve}
             onOpenEvolution={() => setShowEvolutionModal(true)}
             onOpenFamilyUnlock={() => setShowFamilyModal(true)}
+            onToggleAlignment={handleToggleAlignment}
+            onSelectSpecies={handleSelectSpecies}
           />
 
           <EnergyBreakdown

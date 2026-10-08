@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CreatureState, CreatureAlignment, SpeciesEntry } from '../types';
-import { CREATURE_CATALOG, AVAILABLE_SPECIES } from '../data/initialData';
+import { CREATURE_CATALOG, AVAILABLE_SPECIES, getCatalogKey } from '../data/initialData';
 import { sound } from '../services/sound';
 import { Sparkles, Heart, Zap, Lock, ShieldCheck, Sun, Moon, Layers, ChevronRight } from 'lucide-react';
 
@@ -29,20 +29,15 @@ export const CreatureDisplay: React.FC<Props> = ({
   const [imageError, setImageError] = useState(false);
 
   // Determine lookup key
-  const isNumbik = creature.speciesId === 'numbik';
-  let catalogKey = '';
-  if (isNumbik) {
-    if (creature.tier <= 1) {
-      catalogKey = `numbik_${creature.tier}`;
-    } else {
-      catalogKey = `numbik_${creature.tier}_${creature.alignment}`;
-    }
-  } else {
-    catalogKey = `${creature.tier}_${creature.branch}`;
-  }
+  const catalogKey = getCatalogKey(creature.speciesId, creature.tier, creature.branch, creature.alignment);
 
   const info = CREATURE_CATALOG[catalogKey] || CREATURE_CATALOG['numbik_1'] || CREATURE_CATALOG['0_neutral'];
   const activeImage = creature.imageUrl || info.imageUrl;
+
+  // A failed image must not hide the next creature's (different) image.
+  useEffect(() => {
+    setImageError(false);
+  }, [activeImage]);
 
   const currentSpecies = AVAILABLE_SPECIES.find(s => s.id === creature.speciesId) || AVAILABLE_SPECIES[0];
 

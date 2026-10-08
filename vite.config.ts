@@ -2,14 +2,21 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
+import {viteSingleFile} from 'vite-plugin-singlefile';
 
-export default defineConfig(() => {
+export default defineConfig(({mode}) => {
+  // `npm run build:single` bundles JS, CSS and images into one self-contained HTML file.
+  const single = mode === 'single';
+
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), ...(single ? [viteSingleFile()] : [])],
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(import.meta.dirname, '.'),
       },
+    },
+    build: {
+      outDir: single ? 'dist-single' : 'dist',
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.

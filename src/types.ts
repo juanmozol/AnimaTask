@@ -52,6 +52,7 @@ export interface Task {
   isHighPriority: boolean; // Triggers or benefits from x2 multiplier
   isCompleted: boolean;
   completedAt?: string;
+  awardedEnergy?: number; // Energy actually granted on completion (so unchecking refunds the exact amount)
   isDaily: boolean;
 }
 
