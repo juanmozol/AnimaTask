@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom';
 import React, { useState, useEffect, useRef } from 'react';
-import { CreatureState, Task, CameraMission, FamilyMoment, EnergyType, EvolutionBranch, EvolutionTier } from './types';
+import { CreatureState, CreatureAlignment, Task, CameraMission, FamilyMoment, EnergyType, EvolutionBranch, EvolutionTier } from './types';
 import { INITIAL_TASKS, SAMPLE_FAMILY_MOMENTS, CREATURE_CATALOG, MAX_TIER, CreatureEvolutionInfo, getCatalogKey } from './data/initialData';
 import { BALANCE, GameClock, DayEndReport, addDays, clampBalance, computeDayEnd, dayKey, daysBetween, defaultClock, pathFromBalance, taskBalance } from './game/balance';
 import { AppShell } from './components/AppShell';
@@ -361,6 +361,36 @@ export default function App() {
     closeDays(1);
   };
 
+  // Demo: choose the good (harmony) or bad (shadow) version.
+  // Before the fork (egg / Principal) it steers the next evolution; after it, the current
+  // form is swapped for its twin on the other path.
+  const demoPath: CreatureAlignment = creature.tier <= 1 ? pathFromBalance(creature.balance) : creature.alignment;
+
+  const handleSetPath = (path: CreatureAlignment) => {
+    sound.playTap();
+    const balance = path === 'harmony' ? 60 : -60;
+    setCreature(prev =>
+      prev.tier <= 1 ? { ...prev, balance } : withCatalogIdentity({ ...prev, balance, alignment: path })
+    );
+  };
+
+  // Demo: fill the energy up to the next threshold and open the evolution right away
+  const handleEvolveNow = () => {
+    if (creature.tier >= MAX_TIER) return;
+    sound.playTaskComplete(true);
+    setCreature(prev => {
+      const missing = Math.max(0, prev.nextTierThreshold - prev.totalEnergy);
+      return {
+        ...prev,
+        energies: { ...prev.energies, [dominantEnergy]: prev.energies[dominantEnergy] + missing },
+        totalEnergy: prev.totalEnergy + missing,
+        isEvolutionLocked: false,
+        lockReason: undefined,
+      };
+    });
+    setShowEvolutionModal(true);
+  };
+
   // Reset demo state
   const handleResetDemo = () => {
     try {
@@ -383,6 +413,10 @@ export default function App() {
       onQuickCheatBoost={handleQuickCheatBoost}
       onSimulateDayEnd={handleSimulateDayEnd}
       onResetDemo={handleResetDemo}
+      demoPath={demoPath}
+      onSetPath={handleSetPath}
+      onEvolveNow={handleEvolveNow}
+      canEvolveNow={creature.tier < MAX_TIER}
     >
       {/* TAB 1: CREATURE SANCTUARY */}
       {currentTab === 'creature' && (

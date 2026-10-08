@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { sound } from '../services/sound';
+import { CreatureAlignment } from '../types';
 import { Volume2, VolumeX, SlidersHorizontal, PawPrint, ListChecks, Camera, Users } from 'lucide-react';
 
 type Tab = 'creature' | 'tasks' | 'camera' | 'family';
@@ -13,7 +14,16 @@ interface Props {
   onQuickCheatBoost: () => void;
   onSimulateDayEnd: () => void;
   onResetDemo: () => void;
+  demoPath: CreatureAlignment;
+  onSetPath: (path: CreatureAlignment) => void;
+  onEvolveNow: () => void;
+  canEvolveNow: boolean;
 }
+
+const PATHS: Array<{ id: CreatureAlignment; label: string; title: string; active: string }> = [
+  { id: 'harmony', label: 'Armonía', title: 'Ver la versión buena (P2 a P4)', active: 'bg-jade text-lino' },
+  { id: 'shadow', label: 'Sombra', title: 'Ver la versión mala (B2 a B4)', active: 'bg-humo text-lino' },
+];
 
 const NAV_ITEMS: Array<{ id: Tab; label: string; icon: React.ComponentType<{ className?: string; strokeWidth?: number }> }> = [
   { id: 'creature', label: 'Criatura', icon: PawPrint },
@@ -31,6 +41,10 @@ export const AppShell: React.FC<Props> = ({
   onQuickCheatBoost,
   onSimulateDayEnd,
   onResetDemo,
+  demoPath,
+  onSetPath,
+  onEvolveNow,
+  canEvolveNow,
 }) => {
   const [isMuted, setIsMuted] = useState<boolean>(sound.getMuted());
   const [demoOpen, setDemoOpen] = useState(false);
@@ -93,7 +107,42 @@ export const AppShell: React.FC<Props> = ({
                   <p className="px-4 pb-1 pt-3.5 text-[13px] leading-snug text-bruma">
                     Atajos para ver la app en acción sin esperar días.
                   </p>
-                  <ul className="divide-y divide-trazo/70">
+                  <div className="px-4 pb-3 pt-2">
+                    <p className="text-[13px] font-bold">Camino de la criatura</p>
+                    <div role="group" aria-label="Camino de la criatura" className="mt-1.5 grid grid-cols-2 gap-1 rounded-full bg-arena p-1">
+                      {PATHS.map(p => (
+                        <button
+                          key={p.id}
+                          onClick={() => onSetPath(p.id)}
+                          aria-pressed={demoPath === p.id}
+                          title={p.title}
+                          className={`rounded-full py-2 text-[13px] font-bold transition-colors ${
+                            demoPath === p.id ? p.active : 'text-bruma hover:text-tinta'
+                          }`}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="mt-1.5 text-[12px] leading-snug text-bruma">
+                      Cambia la forma actual y decide la próxima evolución.
+                    </p>
+                  </div>
+                  <ul className="divide-y divide-trazo/70 border-t border-trazo/70">
+                    <li>
+                      <button
+                        onClick={() => {
+                          setDemoOpen(false);
+                          onEvolveNow();
+                        }}
+                        disabled={!canEvolveNow}
+                        className={`${demoAction} disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent`}
+                        title="Llevar la energía al umbral y abrir la evolución"
+                      >
+                        <span className="font-medium">Evolucionar ahora</span>
+                        <span className="text-xs text-bruma">{canEvolveNow ? 'salta al siguiente paso' : 'ya es la forma final'}</span>
+                      </button>
+                    </li>
                     <li>
                       <button
                         onClick={onQuickCheatBoost}
