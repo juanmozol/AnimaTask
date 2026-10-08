@@ -136,7 +136,7 @@ export const CreatureDisplay: React.FC<Props> = ({
 
       <div
         onClick={handleInteraction}
-        className="ui-creature relative aspect-[4/3] w-full cursor-pointer overflow-hidden bg-piedra/40 [clip-path:url(#duna)]"
+        className="ui-creature relative aspect-[4/3] w-full cursor-pointer overflow-hidden bg-[radial-gradient(ellipse_at_50%_42%,var(--color-lino),var(--color-arena))] [clip-path:url(#duna)]"
         role="button"
         aria-label={`Acariciar a ${creature.name}`}
       >
@@ -148,7 +148,7 @@ export const CreatureDisplay: React.FC<Props> = ({
               referrerPolicy="no-referrer"
               onError={() => setImageError(true)}
               draggable={false}
-              className={`h-full w-full object-cover transition-transform duration-500 [filter:sepia(0.2)_saturate(0.94)] ${
+              className={`h-full w-full object-contain transition-transform duration-500 [filter:sepia(0.2)_saturate(0.94)_drop-shadow(0_10px_10px_rgb(45_38_32/0.22))] ${
                 isPetting ? 'scale-[1.035]' : 'animate-breathe'
               }`}
             />

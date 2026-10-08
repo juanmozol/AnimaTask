@@ -93,13 +93,13 @@ export const EvolutionModal: React.FC<Props> = ({
 
       {phase === 'revealed' && (
         <div className="mx-auto flex min-h-full w-full max-w-[440px] animate-fade-in flex-col">
-          <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-piedra/40 [clip-path:url(#duna-evo)]">
+          <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-[radial-gradient(ellipse_at_50%_42%,var(--color-lino),var(--color-arena))] [clip-path:url(#duna-evo)]">
             {nextCreatureInfo.imageUrl ? (
               <img
                 src={nextCreatureInfo.imageUrl}
                 alt={nextCreatureInfo.name}
                 draggable={false}
-                className="h-full w-full object-cover [filter:sepia(0.2)_saturate(0.94)]"
+                className="h-full w-full object-contain [filter:sepia(0.2)_saturate(0.94)_drop-shadow(0_10px_10px_rgb(45_38_32/0.22))]"
               />
             ) : (
               <div className="grid h-full w-full place-items-center bg-lino">

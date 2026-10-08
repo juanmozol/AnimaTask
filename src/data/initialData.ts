@@ -1,11 +1,12 @@
 import { CreatureState, Task, CameraMission, FamilyMoment, EnergyBalance, EvolutionBranch, EvolutionTier, CreatureAlignment, SpeciesEntry } from '../types';
-import imgP1 from '../assets/images/numbik_p1_base.jpg';
-import imgP2 from '../assets/images/numbik_p2_good.jpg';
-import imgP3 from '../assets/images/numbik_p3_good.jpg';
-import imgP4 from '../assets/images/numbik_p4_good.jpg';
-import imgB2 from '../assets/images/numbik_b2_bad.jpg';
-import imgB3 from '../assets/images/numbik_b3_bad.jpg';
-import imgB4 from '../assets/images/numbik_b4_bad.jpg';
+import imgEgg from '../assets/images/numbik_0_egg.webp';
+import imgP1 from '../assets/images/numbik_p1_base.webp';
+import imgP2 from '../assets/images/numbik_p2_good.webp';
+import imgP3 from '../assets/images/numbik_p3_good.webp';
+import imgP4 from '../assets/images/numbik_p4_good.webp';
+import imgB2 from '../assets/images/numbik_b2_bad.webp';
+import imgB3 from '../assets/images/numbik_b3_bad.webp';
+import imgB4 from '../assets/images/numbik_b4_bad.webp';
 
 /** Last evolution stage. Numbik: egg (0) → Principal (1) → P2/P3/P4 or B2/B3/B4. */
 export const MAX_TIER: EvolutionTier = 4;
@@ -78,9 +79,10 @@ export const CREATURE_CATALOG: Record<string, CreatureEvolutionInfo> = {
     name: 'Ovo Numbik',
     title: 'Huevo Primordial Terrestre',
     elementLabel: 'Génesis Dual',
-    description: 'Un huevo de tonalidad arcillosa y runas suaves. En su interior late el potencial tanto de la luz como de la sombra.',
+    description: 'Un huevo de cáscara arcillosa con vetas claras y pétalos que empiezan a abrirse. En su interior late el potencial tanto de la luz como de la sombra.',
     specialAbility: 'Equilibrio Cero: Sensible a los primeros hábitos completados.',
     lore: 'Antiguos manuscritos cuentan que su cascarón vibra con la determinación humana.',
+    imageUrl: imgEgg,
     colors: {
       primary: '#d97706',
       secondary: '#a16207',
