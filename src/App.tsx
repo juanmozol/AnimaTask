@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { CreatureState, CreatureAlignment, Task, CameraMission, FamilyMoment, EnergyType, EvolutionBranch, EvolutionTier } from './types';
-import { INITIAL_TASKS, SAMPLE_FAMILY_MOMENTS, CREATURE_CATALOG, AVAILABLE_SPECIES, CreatureEvolutionInfo, getCatalogKey } from './data/initialData';
+import { createPortal } from 'react-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { CreatureState, Task, CameraMission, FamilyMoment, EnergyType, EvolutionBranch, EvolutionTier } from './types';
+import { INITIAL_TASKS, SAMPLE_FAMILY_MOMENTS, CREATURE_CATALOG, MAX_TIER, CreatureEvolutionInfo, getCatalogKey } from './data/initialData';
+import { BALANCE, GameClock, DayEndReport, addDays, clampBalance, computeDayEnd, dayKey, daysBetween, defaultClock, pathFromBalance, taskBalance } from './game/balance';
 import { PhoneFrame } from './components/PhoneFrame';
 import { CreatureDisplay } from './components/CreatureDisplay';
 import { EnergyBreakdown } from './components/EnergyBreakdown';
+import { BalanceMeter } from './components/BalanceMeter';
 import { TaskList } from './components/TaskList';
 import { CameraMissionsView } from './components/CameraMissionsView';
 import { CameraMissionModal } from './components/CameraMissionModal';
@@ -36,6 +39,7 @@ const DEFAULT_CREATURE: CreatureState = {
   id: 'companion-1',
   speciesId: 'numbik',
   alignment: 'harmony',
+  balance: 0,
   name: CREATURE_CATALOG['numbik_0'].name,
   title: CREATURE_CATALOG['numbik_0'].title,
   tier: 0,
@@ -69,14 +73,16 @@ function withCatalogIdentity(c: CreatureState): CreatureState {
   };
 }
 
-// Saves from earlier versions have no speciesId / alignment.
+// Saves from earlier versions: no balance (the path used to be a manual toggle) and
+// possibly another species or the old 3-stage tree. Numbik is the only playable species now.
 function migrateCreature(saved: Partial<CreatureState>): CreatureState {
   const merged = { ...DEFAULT_CREATURE, ...saved } as CreatureState;
-  if (saved.speciesId && saved.alignment) return merged;
+  if (saved.balance !== undefined && saved.speciesId === 'numbik' && saved.alignment) return merged;
   return withCatalogIdentity({
     ...merged,
-    speciesId: saved.speciesId ?? 'numbik',
+    speciesId: 'numbik',
     alignment: saved.alignment ?? 'harmony',
+    balance: saved.balance ?? (saved.alignment === 'shadow' ? -10 : 0),
   });
 }
 
@@ -97,6 +103,16 @@ export default function App() {
   const [familyMoments, setFamilyMoments] = useState<FamilyMoment[]>(
     () => loadSaved<FamilyMoment[]>('animatask_moments') ?? SAMPLE_FAMILY_MOMENTS
   );
+
+  // Day clock (for "procrastination" and "days without family")
+  const [game, setGame] = useState<GameClock>(() => loadSaved<GameClock>('animatask_game') ?? defaultClock());
+  const [dayReport, setDayReport] = useState<DayEndReport | null>(null);
+
+  // Latest state for timer callbacks
+  const tasksRef = useRef(tasks);
+  tasksRef.current = tasks;
+  const gameRef = useRef(game);
+  gameRef.current = game;
 
   // Multiplier x2 state
   const [multiplierActive, setMultiplierActive] = useState<boolean>(false);
@@ -120,6 +136,45 @@ export default function App() {
   useEffect(() => {
     save('animatask_moments', familyMoments);
   }, [familyMoments]);
+
+  useEffect(() => {
+    save('animatask_game', game);
+  }, [game]);
+
+  // Close finished days: pending daily tasks and missing family time lower the balance.
+  const closeDays = (days: number, newLastDay?: string) => {
+    if (days <= 0) return;
+    const g = gameRef.current;
+    const report = computeDayEnd(tasksRef.current, g.lastFamilyDay, g.lastDay, days);
+    const next: GameClock = { ...g, lastDay: newLastDay ?? addDays(g.lastDay, days) };
+    gameRef.current = next; // guards against a double call before the next render
+    setGame(next);
+    setCreature(prev => ({ ...prev, balance: clampBalance(prev.balance + report.delta) }));
+    setTasks(prev => prev.map(t => (t.isDaily ? { ...t, isCompleted: false, awardedEnergy: undefined } : t)));
+    setDayReport(report);
+  };
+
+  // Real midnight: check on load, every minute and when the tab becomes visible again.
+  useEffect(() => {
+    const check = () => {
+      const today = dayKey();
+      const elapsed = daysBetween(gameRef.current.lastDay, today);
+      if (elapsed > 0) closeDays(Math.min(elapsed, BALANCE.maxCatchUpDays), today);
+    };
+    check();
+    const interval = setInterval(check, 60_000);
+    document.addEventListener('visibilitychange', check);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', check);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!dayReport) return;
+    const timer = setTimeout(() => setDayReport(null), 7000);
+    return () => clearTimeout(timer);
+  }, [dayReport]);
 
   // Countdown timer for x2 Multiplier
   useEffect(() => {
@@ -150,14 +205,15 @@ export default function App() {
 
   // Determine next evolution target
   const getNextEvolutionInfo = (): CreatureEvolutionInfo => {
-    const nextTier = (Math.min(3, creature.tier + 1)) as EvolutionTier;
-    // Numbik follows the Senda (alignment) the player chose; other species follow the dominant energy.
+    const nextTier = (Math.min(MAX_TIER, creature.tier + 1)) as EvolutionTier;
+    // The path is decided by habits when leaving Principal (stage 1); afterwards it is fixed.
+    const path = creature.tier <= 1 ? pathFromBalance(creature.balance) : creature.alignment;
     const targetBranch: EvolutionBranch = nextTier === 1 ? 'neutral' : dominantEnergy;
-    const catalogKey = getCatalogKey(creature.speciesId, nextTier, targetBranch, creature.alignment);
+    const catalogKey = getCatalogKey(creature.speciesId, nextTier, targetBranch, path);
     return CREATURE_CATALOG[catalogKey] || CREATURE_CATALOG['numbik_1'];
   };
 
-  const canEvolve = creature.totalEnergy >= creature.nextTierThreshold && !creature.isEvolutionLocked && creature.tier < 3;
+  const canEvolve = creature.totalEnergy >= creature.nextTierThreshold && !creature.isEvolutionLocked && creature.tier < MAX_TIER;
 
   // Multiplier activation
   const activateMultiplier = (durationSec = 180) => {
@@ -166,7 +222,7 @@ export default function App() {
   };
 
   // Add energy to creature
-  const grantEnergy = (category: EnergyType, amount: number) => {
+  const grantEnergy = (category: EnergyType, amount: number, balanceDelta = 0) => {
     setCreature(prev => {
       const newEnergies = {
         ...prev.energies,
@@ -187,6 +243,7 @@ export default function App() {
         ...prev,
         energies: newEnergies,
         totalEnergy: newTotal,
+        balance: clampBalance(prev.balance + balanceDelta),
         isEvolutionLocked: isLocked,
         lockReason,
       };
@@ -206,7 +263,7 @@ export default function App() {
       );
 
       sound.playTaskComplete(isBoosted);
-      grantEnergy(task.category, points);
+      grantEnergy(task.category, points, taskBalance(task));
 
       // If completing a high priority task, also trigger or extend multiplier boost!
       if (task.isHighPriority && !multiplierActive) {
@@ -228,6 +285,7 @@ export default function App() {
           [task.category]: Math.max(0, prev.energies[task.category] - refund),
         },
         totalEnergy: Math.max(0, prev.totalEnergy - refund),
+        balance: clampBalance(prev.balance - taskBalance(task)),
       }));
     }
   };
@@ -244,7 +302,7 @@ export default function App() {
 
   // Camera mission completion
   const handleCompleteCameraMission = (mission: CameraMission, earnedEnergy: number) => {
-    grantEnergy(mission.rewardCategory, earnedEnergy);
+    grantEnergy(mission.rewardCategory, earnedEnergy, BALANCE.camera);
   };
 
   // Family Moment Save & Unlock
@@ -256,7 +314,8 @@ export default function App() {
     };
 
     setFamilyMoments(prev => [newMoment, ...prev]);
-    grantEnergy('familia', 120);
+    grantEnergy('familia', 120, BALANCE.family);
+    setGame(g => ({ ...g, lastFamilyDay: dayKey() }));
 
     // Liberar bloqueo evolutivo
     setCreature(prev => ({
@@ -274,6 +333,7 @@ export default function App() {
       1: 300,
       2: 750,
       3: 1500,
+      4: 3000, // final form: unused
     };
 
     setCreature(prev => ({
@@ -289,24 +349,16 @@ export default function App() {
     }));
   };
 
-  // Senda switch (Numbik): the card follows the chosen path
-  const handleToggleAlignment = (alignment: CreatureAlignment) => {
-    setCreature(prev => (prev.alignment === alignment ? prev : withCatalogIdentity({ ...prev, alignment })));
-  };
-
-  // Active companion switch
-  const handleSelectSpecies = (speciesId: string) => {
-    setCreature(prev => {
-      if (prev.speciesId === speciesId) return prev;
-      const species = AVAILABLE_SPECIES.find(sp => sp.id === speciesId);
-      return withCatalogIdentity({ ...prev, speciesId, alignment: species?.defaultAlignment ?? 'harmony' });
-    });
-  };
-
   // Quick Cheat Boost for instantaneous demo verification
   const handleQuickCheatBoost = () => {
     sound.playTaskComplete(true);
     grantEnergy(dominantEnergy, 60);
+  };
+
+  // Demo: close the current day right now
+  const handleSimulateDayEnd = () => {
+    sound.playTap();
+    closeDays(1);
   };
 
   // Reset demo state
@@ -315,6 +367,7 @@ export default function App() {
       localStorage.removeItem('animatask_creature');
       localStorage.removeItem('animatask_tasks');
       localStorage.removeItem('animatask_moments');
+      localStorage.removeItem('animatask_game');
     } catch {
       /* storage unavailable: nothing to clear */
     }
@@ -328,6 +381,7 @@ export default function App() {
       multiplierActive={multiplierActive}
       onOpenExport={() => setShowExportModal(true)}
       onQuickCheatBoost={handleQuickCheatBoost}
+      onSimulateDayEnd={handleSimulateDayEnd}
       onResetDemo={handleResetDemo}
     >
       {/* TAB 1: CREATURE SANCTUARY */}
@@ -338,9 +392,9 @@ export default function App() {
             canEvolve={canEvolve}
             onOpenEvolution={() => setShowEvolutionModal(true)}
             onOpenFamilyUnlock={() => setShowFamilyModal(true)}
-            onToggleAlignment={handleToggleAlignment}
-            onSelectSpecies={handleSelectSpecies}
           />
+
+          <BalanceMeter balance={creature.balance} tier={creature.tier} alignment={creature.alignment} />
 
           <EnergyBreakdown
             energies={creature.energies}
@@ -417,6 +471,25 @@ export default function App() {
       {showExportModal && (
         <ExportModal onClose={() => setShowExportModal(false)} />
       )}
+      {/* END-OF-DAY REPORT (portal: escapes the frame's stacking context so it sits above the header) */}
+      {dayReport && createPortal(
+        <div
+          role="status"
+          onClick={() => setDayReport(null)}
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] w-[calc(100%-2rem)] max-w-xs rounded-2xl border border-slate-700 bg-slate-900/95 backdrop-blur px-4 py-3 text-xs shadow-2xl animate-fade-in cursor-pointer"
+        >
+          <p className="font-bold text-white">🌙 Fin del día</p>
+          {dayReport.delta < 0 ? (
+            <p className="mt-1 text-slate-300">
+              Balance <span className="font-bold text-emerald-300">{dayReport.delta}</span>
+              {dayReport.missedTasks > 0 && ` · ${dayReport.missedTasks} tarea${dayReport.missedTasks > 1 ? 's' : ''} sin completar`}
+              {dayReport.noFamilyDays > 0 && ' · sin tiempo en familia'}
+            </p>
+          ) : (
+            <p className="mt-1 text-slate-300">Sin penalizaciones. ¡Buen día!</p>
+          )}
+        </div>
+      , document.body)}
     </PhoneFrame>
   );
 }

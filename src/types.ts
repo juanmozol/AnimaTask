@@ -9,7 +9,7 @@ export interface EnergyBalance {
 
 export type EvolutionBranch = 'neutral' | 'enfoque' | 'familia' | 'creativo' | 'activo';
 
-export type EvolutionTier = 0 | 1 | 2 | 3; // 0: Huevo, 1: Brote, 2: Rama, 3: Alfa
+export type EvolutionTier = 0 | 1 | 2 | 3 | 4; // 0: Huevo, 1: Principal, 2-4: etapas de la senda (P2-P4 armonía / B2-B4 sombra)
 
 export type CreatureAlignment = 'harmony' | 'shadow'; // Good (Luz/Armonía) vs Bad (Sombra/Abismo)
 
@@ -20,7 +20,8 @@ export interface CreatureState {
   title: string;
   tier: EvolutionTier;
   branch: EvolutionBranch;
-  alignment: CreatureAlignment;
+  alignment: CreatureAlignment; // Senda: se fija al evolucionar de Principal (1) a la etapa 2
+  balance: number; // Hábitos: -100 (Sombra) .. +100 (Armonía). Decide la senda.
   description: string;
   specialAbility: string;
   energies: EnergyBalance;
