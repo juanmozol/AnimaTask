@@ -8,7 +8,7 @@ import { MoveKind, TaskBarrier } from '../types';
 
 // Prototype switch: shows an "Atajo demo" link in every barrier so the app can be shown on a laptop.
 // Set it to false before real use.
-export const DEMO_SHORTCUTS = true;
+export const DEMO_SHORTCUTS = false;
 
 export const PLACE_RADII = [50, 100, 250];
 export const OFFLINE_MINUTES = [15, 25, 45, 60];
