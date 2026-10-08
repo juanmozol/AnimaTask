@@ -12,6 +12,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@fontsource-variable/grenze-gotisch": "^5.3.0",
     "@fontsource/zen-maru-gothic": "^5.3.0",
     "@google/genai": "^2.4.0",
     "@tailwindcss/vite": "^4.3.3",
