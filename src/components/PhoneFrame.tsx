@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { sound } from '../services/sound';
-import { Volume2, VolumeX, Smartphone, Monitor, Download, RotateCcw, Sparkles } from 'lucide-react';
+import { Volume2, VolumeX, Smartphone, Monitor, Download, RotateCcw, Sparkles, Moon } from 'lucide-react';
 
 interface Props {
   currentTab: 'creature' | 'tasks' | 'camera' | 'family';
@@ -9,6 +9,7 @@ interface Props {
   multiplierActive: boolean;
   onOpenExport: () => void;
   onQuickCheatBoost: () => void;
+  onSimulateDayEnd: () => void;
   onResetDemo: () => void;
 }
 
@@ -19,6 +20,7 @@ export const PhoneFrame: React.FC<Props> = ({
   multiplierActive,
   onOpenExport,
   onQuickCheatBoost,
+  onSimulateDayEnd,
   onResetDemo,
 }) => {
   const [currentTime, setCurrentTime] = useState<string>('09:41');
@@ -80,6 +82,16 @@ export const PhoneFrame: React.FC<Props> = ({
           >
             <Sparkles className="w-3 h-3 text-amber-400" />
             <span className="hidden sm:inline">Probar</span> +60 pts
+          </button>
+
+          {/* Demo: close the day (pending tasks and no family time pull toward Sombra) */}
+          <button
+            onClick={onSimulateDayEnd}
+            className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold flex items-center gap-1 transition-colors"
+            title="Simular fin del día: las tareas sin completar bajan el balance"
+          >
+            <Moon className="w-3 h-3" />
+            <span className="hidden sm:inline">Fin del día</span>
           </button>
 
           {/* Export to GitHub Pages Button */}

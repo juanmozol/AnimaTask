@@ -15,7 +15,7 @@ export const FamilyReconnectionModal: React.FC<Props> = ({
   onClose,
 }) => {
   const [selectedActivity, setSelectedActivity] = useState<string>(
-    '15 min de charla sin teléfonos ni pantallas'
+    '15 min de charla sin teléfonos'
   );
   const [parentName, setParentName] = useState<string>('Papá / Mamá');
   const [reflection, setReflection] = useState<string>(

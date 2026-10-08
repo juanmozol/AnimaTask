@@ -118,14 +118,22 @@ export const EvolutionModal: React.FC<Props> = ({
 
             {/* Creature Avatar Glow Box */}
             <div
-              className="w-36 h-36 rounded-2xl flex items-center justify-center p-3 border border-white/20 shadow-2xl relative my-1"
+              className="w-52 h-40 rounded-2xl flex items-center justify-center p-1.5 border border-white/20 shadow-2xl relative my-1 overflow-hidden"
               style={{
                 background: `radial-gradient(circle, ${nextCreatureInfo.colors.glow}, rgba(15, 23, 42, 0.9))`,
               }}
             >
-              <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center">
-                <span className="text-4xl animate-bounce">✨</span>
-              </div>
+              {nextCreatureInfo.imageUrl ? (
+                <img
+                  src={nextCreatureInfo.imageUrl}
+                  alt={nextCreatureInfo.name}
+                  className="w-full h-full object-cover rounded-xl"
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center">
+                  <span className="text-4xl animate-bounce">✨</span>
+                </div>
+              )}
             </div>
 
             {/* Title & Lore */}
@@ -134,6 +142,9 @@ export const EvolutionModal: React.FC<Props> = ({
                 {nextCreatureInfo.name}
               </h2>
               <p className="text-xs font-semibold text-cyan-400">{nextCreatureInfo.title}</p>
+              <p className={`text-[10px] font-bold uppercase tracking-wider ${nextCreatureInfo.alignment === 'shadow' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                {nextCreatureInfo.elementLabel}
+              </p>
               <p className="text-xs text-slate-300 px-2 line-clamp-2 mt-1">
                 {nextCreatureInfo.description}
               </p>

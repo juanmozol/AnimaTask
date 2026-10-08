@@ -43,10 +43,7 @@ export const CameraMissionModal: React.FC<Props> = ({
             return;
           }
           streamRef.current = stream;
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            videoRef.current.play().catch(() => {});
-          }
+          // The <video> only mounts once hasCameraStream is true; the effect below attaches the stream then.
           setHasCameraStream(true);
         } else {
           setHasCameraStream(false);
@@ -66,6 +63,14 @@ export const CameraMissionModal: React.FC<Props> = ({
       }
     };
   }, []);
+
+  // Attach the stream once the <video> element exists.
+  useEffect(() => {
+    if (hasCameraStream && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      videoRef.current.play().catch(() => {});
+    }
+  }, [hasCameraStream]);
 
   const handleCaptureAndScan = () => {
     sound.playCameraShutter();

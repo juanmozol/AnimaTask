@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { CreatureState, CreatureAlignment, SpeciesEntry } from '../types';
-import { CREATURE_CATALOG, AVAILABLE_SPECIES } from '../data/initialData';
+import React, { useState, useEffect } from 'react';
+import { CreatureState } from '../types';
+import { CREATURE_CATALOG, AVAILABLE_SPECIES, MAX_TIER, getCatalogKey } from '../data/initialData';
 import { sound } from '../services/sound';
-import { Sparkles, Heart, Zap, Lock, ShieldCheck, Sun, Moon, Layers, ChevronRight } from 'lucide-react';
+import { Heart, Zap, Lock, ShieldCheck, Layers, ChevronRight } from 'lucide-react';
 
 interface Props {
   creature: CreatureState;
@@ -10,8 +10,6 @@ interface Props {
   canEvolve: boolean;
   onOpenEvolution?: () => void;
   onOpenFamilyUnlock?: () => void;
-  onToggleAlignment?: (alignment: CreatureAlignment) => void;
-  onSelectSpecies?: (speciesId: string) => void;
 }
 
 export const CreatureDisplay: React.FC<Props> = ({
@@ -20,8 +18,6 @@ export const CreatureDisplay: React.FC<Props> = ({
   canEvolve,
   onOpenEvolution,
   onOpenFamilyUnlock,
-  onToggleAlignment,
-  onSelectSpecies,
 }) => {
   const [isPetting, setIsPetting] = useState(false);
   const [hearts, setHearts] = useState<Array<{ id: number; x: number; y: number }>>([]);
@@ -29,20 +25,15 @@ export const CreatureDisplay: React.FC<Props> = ({
   const [imageError, setImageError] = useState(false);
 
   // Determine lookup key
-  const isNumbik = creature.speciesId === 'numbik';
-  let catalogKey = '';
-  if (isNumbik) {
-    if (creature.tier <= 1) {
-      catalogKey = `numbik_${creature.tier}`;
-    } else {
-      catalogKey = `numbik_${creature.tier}_${creature.alignment}`;
-    }
-  } else {
-    catalogKey = `${creature.tier}_${creature.branch}`;
-  }
+  const catalogKey = getCatalogKey(creature.speciesId, creature.tier, creature.branch, creature.alignment);
 
   const info = CREATURE_CATALOG[catalogKey] || CREATURE_CATALOG['numbik_1'] || CREATURE_CATALOG['0_neutral'];
   const activeImage = creature.imageUrl || info.imageUrl;
+
+  // A failed image must not hide the next creature's (different) image.
+  useEffect(() => {
+    setImageError(false);
+  }, [activeImage]);
 
   const currentSpecies = AVAILABLE_SPECIES.find(s => s.id === creature.speciesId) || AVAILABLE_SPECIES[0];
 
@@ -66,7 +57,7 @@ export const CreatureDisplay: React.FC<Props> = ({
 
   return (
     <div className="relative w-full flex flex-col items-center select-none">
-      {/* Top Header: Neutral Species Switcher + Senda Toggle */}
+      {/* Top Header: Species Switcher (the path is decided by habits, see BalanceMeter) */}
       <div className="w-full flex items-center justify-between mb-2.5 px-0.5">
         {/* Species selector pill */}
         <button
@@ -81,42 +72,6 @@ export const CreatureDisplay: React.FC<Props> = ({
           <span className="text-[10px] text-slate-500 font-normal">· Cambiar</span>
         </button>
 
-        {/* Dual Path (Good vs Bad) Alignment Switcher */}
-        {currentSpecies.hasBipolarPaths && (
-          <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-0.5">
-            <button
-              onClick={() => {
-                sound.playTap();
-                onToggleAlignment?.('harmony');
-              }}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
-                creature.alignment === 'harmony'
-                  ? 'bg-amber-500/20 text-amber-300 shadow-sm border border-amber-500/30'
-                  : 'text-slate-500 hover:text-slate-300'
-              }`}
-              title="Senda de Armonía (Luz y Sabiduría)"
-            >
-              <Sun className="w-3 h-3 text-amber-400" />
-              <span>Armonía</span>
-            </button>
-
-            <button
-              onClick={() => {
-                sound.playTap();
-                onToggleAlignment?.('shadow');
-              }}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
-                creature.alignment === 'shadow'
-                  ? 'bg-emerald-500/20 text-emerald-300 shadow-sm border border-emerald-500/30'
-                  : 'text-slate-500 hover:text-slate-300'
-              }`}
-              title="Senda del Abismo (Sombra y Espectro)"
-            >
-              <Moon className="w-3 h-3 text-emerald-400" />
-              <span>Sombra</span>
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Main Neutral Studio Showcase Habitat */}
@@ -152,7 +107,7 @@ export const CreatureDisplay: React.FC<Props> = ({
           <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-950/70 border border-slate-800 text-[11px] font-semibold text-slate-300 font-mono">
             <span>Etapa {creature.tier}</span>
             <span className="text-slate-600">·</span>
-            <span>{creature.tier === 0 ? 'Huevo' : creature.tier === 1 ? 'Base' : creature.tier === 2 ? 'Rama' : 'Alfa'}</span>
+            <span>{creature.tier === 0 ? 'Huevo' : creature.tier === 1 ? 'Principal' : creature.tier === MAX_TIER ? 'Alfa' : creature.alignment === 'shadow' ? `B${creature.tier}` : `P${creature.tier}`}</span>
           </div>
         </div>
 
@@ -170,7 +125,7 @@ export const CreatureDisplay: React.FC<Props> = ({
         {/* Creature 3D Render or Stylized Graphic */}
         <div className={`transition-transform duration-300 flex items-center justify-center ${isPetting ? 'scale-105' : 'animate-[bounce_4.5s_ease-in-out_infinite]'}`}>
           {activeImage && !imageError ? (
-            <div className="relative w-48 h-48 rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-slate-950/40">
+            <div className="relative w-64 h-48 rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-slate-950/40">
               <img
                 src={activeImage}
                 alt={info.name}
@@ -204,7 +159,7 @@ export const CreatureDisplay: React.FC<Props> = ({
               <h2 className="text-lg font-bold text-white tracking-tight">
                 {creature.name}
               </h2>
-              {creature.tier === 3 && (
+              {creature.tier === MAX_TIER && (
                 <span className="text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-amber-400 text-slate-950">
                   ALFA
                 </span>
@@ -222,6 +177,11 @@ export const CreatureDisplay: React.FC<Props> = ({
               <Lock className="w-3.5 h-3.5" />
               <span>Bloqueo Familiar</span>
             </button>
+          ) : creature.tier >= MAX_TIER ? (
+            <div className="text-right">
+              <span className="text-xs text-amber-300 font-bold">Forma final</span>
+              <p className="text-[10px] text-slate-500">{creature.totalEnergy} pts</p>
+            </div>
           ) : canEvolve ? (
             <button
               onClick={onOpenEvolution}
@@ -247,7 +207,7 @@ export const CreatureDisplay: React.FC<Props> = ({
           <div
             className="h-full rounded-full transition-all duration-700 ease-out"
             style={{
-              width: `${Math.min(100, (creature.totalEnergy / creature.nextTierThreshold) * 100)}%`,
+              width: creature.tier >= MAX_TIER ? '100%' : `${Math.min(100, (creature.totalEnergy / creature.nextTierThreshold) * 100)}%`,
               backgroundColor: creature.alignment === 'shadow' ? '#10b981' : '#f59e0b',
             }}
           />
@@ -287,18 +247,21 @@ export const CreatureDisplay: React.FC<Props> = ({
             <div className="space-y-2">
               {AVAILABLE_SPECIES.map(sp => {
                 const isSelected = sp.id === creature.speciesId;
+                const isAvailable = sp.id === 'numbik'; // only Numbik has its full evolution tree so far
                 return (
                   <button
                     key={sp.id}
+                    disabled={!isAvailable}
                     onClick={() => {
                       sound.playTap();
-                      onSelectSpecies?.(sp.id);
                       setShowSpeciesModal(false);
                     }}
                     className={`w-full p-3 rounded-2xl border text-left flex items-center justify-between transition-all ${
                       isSelected
                         ? 'bg-slate-800 border-slate-600 text-white shadow-sm'
-                        : 'bg-slate-900/60 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                        : isAvailable
+                          ? 'bg-slate-900/60 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                          : 'bg-slate-900/40 border-slate-800/60 text-slate-600 cursor-not-allowed'
                     }`}
                   >
                     <div>
@@ -307,6 +270,11 @@ export const CreatureDisplay: React.FC<Props> = ({
                         {sp.hasBipolarPaths && (
                           <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-300 font-semibold border border-amber-500/20">
                             Dual: Luz / Sombra
+                          </span>
+                        )}
+                        {!isAvailable && (
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 font-semibold border border-slate-700">
+                            Próximamente
                           </span>
                         )}
                       </div>
