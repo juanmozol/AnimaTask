@@ -188,15 +188,21 @@ export default function App() {
     save('animatask_game', game);
   }, [game]);
 
-  // Coming back from the Abyss: once the balance climbs to BALANCE.redeem, the Shadow creature
-  // turns into its Harmony twin at the same stage.
+  // The path follows the habits in both directions, always at the same stage:
+  // a Shadow creature that climbs back to BALANCE.redeem returns to its Harmony twin, and a
+  // Harmony creature that sinks to BALANCE.fall falls to its Shadow twin.
+  const pathTurn = (c: CreatureState): CreatureAlignment | null => {
+    if (c.tier < 2) return null;
+    if (c.alignment === 'shadow' && c.balance >= BALANCE.redeem) return 'harmony';
+    if (c.alignment !== 'shadow' && c.balance <= BALANCE.fall) return 'shadow';
+    return null;
+  };
   useEffect(() => {
-    if (creature.tier >= 2 && creature.alignment === 'shadow' && creature.balance >= BALANCE.redeem) {
-      setCreature(prev =>
-        prev.tier >= 2 && prev.alignment === 'shadow' && prev.balance >= BALANCE.redeem
-          ? withCatalogIdentity({ ...prev, alignment: 'harmony' })
-          : prev
-      );
+    if (pathTurn(creature)) {
+      setCreature(prev => {
+        const turn = pathTurn(prev);
+        return turn ? withCatalogIdentity({ ...prev, alignment: turn }) : prev;
+      });
     }
   }, [creature.tier, creature.alignment, creature.balance]);
 

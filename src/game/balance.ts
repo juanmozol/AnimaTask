@@ -9,6 +9,8 @@ import { CreatureAlignment, Task } from '../types';
  *   (P2 → P3 → P4), balance < 0 → Abismo (B2 → B3 → B4).
  * - The Abyss is not forever: going back to the tasks raises the balance, the interface clears
  *   step by step, and at BALANCE.redeem the creature turns into its Harmony twin (same stage).
+ * - Harmony is not forever either: neglect sinks the balance and at BALANCE.fall the creature
+ *   falls to its Shadow twin. The gap between fall and redeem keeps it from flipping back and forth.
  */
 export const BALANCE = {
   min: -100,
@@ -28,6 +30,7 @@ export const BALANCE = {
   noFamilyAfterDays: 3, // days since the last family moment before it starts to hurt
   maxCatchUpDays: 3, // coming back after a long break never costs more than this many days
   redeem: 10, // a Shadow creature whose balance climbs back to this returns to the Harmony path
+  fall: -20, // a Harmony creature whose balance sinks to this falls to the Shadow path
 } as const;
 
 export const clampBalance = (n: number): number => Math.max(BALANCE.min, Math.min(BALANCE.max, n));

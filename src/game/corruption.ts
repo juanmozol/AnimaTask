@@ -10,7 +10,8 @@ import { CreatureState } from '../types';
  *   the Shadow is gaining ground, but nothing has turned yet.
  * - Once it is on the Shadow path, its form decides: B2 = 2, B3 = 3, B4 = 4. The creature is
  *   fixed, so the interface follows the creature, not the day-to-day balance.
- * - A creature on the Harmony path never goes past step 2, but slipping habits show.
+ * - A creature on the Harmony path shows slipping habits up to step 2; past that it falls to the
+ *   Shadow (see BALANCE.fall) and the rule above takes over.
  */
 export type CorruptionLevel = 0 | 1 | 2 | 3 | 4;
 

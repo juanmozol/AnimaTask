@@ -19,7 +19,9 @@ export const BalanceMeter: React.FC<Props> = ({ balance, tier, alignment }) => {
 
   const headline = pathLocked
     ? shown === 'harmony'
-      ? 'Senda de Armonía fijada'
+      ? balance < 0
+        ? 'La Sombra acecha'
+        : 'Senda de Armonía'
       : balance >= 0
         ? 'La Sombra retrocede'
         : 'Senda del Abismo'
@@ -29,7 +31,7 @@ export const BalanceMeter: React.FC<Props> = ({ balance, tier, alignment }) => {
 
   const hint = pathLocked
     ? shown === 'harmony'
-      ? 'Tu criatura ya eligió camino y seguirá evolucionando por él.'
+      ? 'Sigue con tus tareas y tu familia. Si las descuidas y el balance llega a −20, tu criatura cae a la Sombra.'
       : 'Si vuelves a tus tareas y a tu familia, la Sombra retrocede paso a paso. Con el balance en +10, tu criatura regresa a la Armonía.'
     : 'Completa tareas y registra momentos en familia para inclinarte a la Armonía. Dejar tareas pendientes o pasar días sin familia te acerca a la Sombra. La senda se decide al evolucionar de Principal.';
 
