@@ -1,1 +1,146 @@
 @import "tailwindcss";
+
+/*
+ * Sistema visual: arena cálida + tinta marrón, con el jade del ojo de Numbik como único acento.
+ * Las energías usan pigmentos de tintes naturales (añil, rubia, cochinilla, musgo, cúrcuma).
+ */
+@theme {
+  --font-sans: 'Zen Maru Gothic', ui-rounded, 'Hiragino Maru Gothic ProN', 'Nunito', system-ui, sans-serif;
+
+  --color-arena: #e9dfce; /* fondo de la página */
+  --color-lino: #f4ede0; /* hojas, campos */
+  --color-tinta: #2d2620; /* texto */
+  --color-bruma: #655848; /* texto secundario */
+  --color-trazo: #cfc1a8; /* líneas finas */
+  --color-piedra: #b9aa8f; /* guías, pistas de progreso */
+
+  --color-jade: #256e69; /* acción principal */
+  --color-jade-claro: #dcebe4;
+
+  --color-anil: #3f5e8c; /* Enfoque */
+  --color-rubia: #a8564c; /* Familia */
+  --color-cochinilla: #85506f; /* Creativo */
+  --color-musgo: #5f7b3f; /* Activo */
+  --color-curcuma: #b8862a; /* Armonía, multiplicador */
+  --color-curcuma-hondo: #8a6212;
+  --color-humo: #4e4c5a; /* Sombra */
+
+  --animate-fade-in: fade-in 0.45s ease-out both;
+  --animate-sheet-up: sheet-up 0.38s cubic-bezier(0.22, 0.8, 0.3, 1) both;
+  --animate-breathe: breathe 7s ease-in-out infinite;
+  --animate-rise: rise 1.3s ease-out both;
+  --animate-draw: draw 2.4s cubic-bezier(0.5, 0, 0.3, 1) both;
+  --animate-scan: scan 1.6s ease-in-out infinite alternate;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes sheet-up {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes breathe {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.018);
+    }
+  }
+  @keyframes rise {
+    from {
+      opacity: 0.95;
+      transform: translate(-50%, -30%) scale(0.9);
+    }
+    to {
+      opacity: 0;
+      transform: translate(-50%, -170%) scale(1.1);
+    }
+  }
+  @keyframes scan {
+    from {
+      top: 12%;
+    }
+    to {
+      top: 88%;
+    }
+  }
+  @keyframes draw {
+    from {
+      stroke-dashoffset: 100;
+    }
+    to {
+      stroke-dashoffset: 8;
+    }
+  }
+}
+
+@layer base {
+  html {
+    background: var(--color-arena);
+  }
+  body {
+    margin: 0;
+    background: var(--color-arena);
+    color: var(--color-tinta);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+  ::selection {
+    background: var(--color-jade);
+    color: var(--color-lino);
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: default;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-jade);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

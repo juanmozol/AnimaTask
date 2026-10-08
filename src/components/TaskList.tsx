@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Task, EnergyType } from '../types';
 import { TaskCard } from './TaskCard';
 import { sound } from '../services/sound';
-import { Plus, Flame, Sparkles, Filter, X } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 
 interface Props {
   tasks: Task[];
@@ -12,6 +12,17 @@ interface Props {
   onToggleComplete: (task: Task) => void;
   onAddTask: (newTask: Omit<Task, 'id' | 'isCompleted'>) => void;
 }
+
+const FILTERS: Array<{ id: 'all' | EnergyType; label: string }> = [
+  { id: 'all', label: 'Todas' },
+  { id: 'enfoque', label: 'Enfoque' },
+  { id: 'familia', label: 'Familia' },
+  { id: 'creativo', label: 'Creativo' },
+  { id: 'activo', label: 'Activo' },
+];
+
+const field =
+  'w-full border-0 border-b border-piedra bg-transparent px-0 py-2 text-[15px] placeholder:text-bruma/70 focus:border-jade focus:outline-none focus-visible:outline-none';
 
 export const TaskList: React.FC<Props> = ({
   tasks,
@@ -30,6 +41,9 @@ export const TaskList: React.FC<Props> = ({
   const [newReward, setNewReward] = useState(35);
 
   const filteredTasks = tasks.filter(t => (filter === 'all' ? true : t.category === filter));
+  const doneCount = tasks.filter(t => t.isCompleted).length;
+  const rawToday = new Date().toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' });
+  const today = rawToday.charAt(0).toUpperCase() + rawToday.slice(1);
 
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,71 +71,143 @@ export const TaskList: React.FC<Props> = ({
   };
 
   return (
-    <div className="space-y-3">
-      {/* MULTIPLIER X2 STATUS CARD */}
-      <div
-        className={`p-3.5 rounded-2xl border transition-all duration-300 relative overflow-hidden ${
-          multiplierActive
-            ? 'bg-gradient-to-r from-amber-950/60 via-orange-950/50 to-amber-900/40 border-amber-500/50 shadow-lg shadow-amber-500/15'
-            : 'bg-slate-900/80 border-slate-800'
-        }`}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div
-              className={`p-2 rounded-xl transition-all ${
-                multiplierActive
-                  ? 'bg-amber-500 text-slate-950 animate-bounce'
-                  : 'bg-slate-800 text-slate-400'
-              }`}
-            >
-              <Flame className="w-5 h-5 fill-current" />
-            </div>
-
-            <div>
-              <div className="flex items-center gap-1.5">
-                <h4 className="text-xs font-bold text-white">Multiplicador x2</h4>
-                {multiplierActive ? (
-                  <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500 text-slate-950 animate-pulse">
-                    ACTIVO ({formatTimer(multiplierSecondsLeft)})
-                  </span>
-                ) : (
-                  <span className="text-[10px] font-medium text-slate-400">En espera</span>
-                )}
-              </div>
-              <p className="text-[11px] text-slate-300 mt-0.5">
-                Las tareas prioritarias duplican la velocidad de energía y maduración.
-              </p>
-            </div>
-          </div>
-
-          {!multiplierActive && (
-            <button
-              onClick={() => {
-                sound.playMultiplierActivated();
-                onActivateMultiplier();
-              }}
-              className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-bold whitespace-nowrap transition-colors"
-            >
-              Activar x2
-            </button>
-          )}
+    <div className="space-y-7 pb-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-[28px] font-bold leading-tight tracking-tight">Hoy</h2>
+          <p className="text-[15px] text-bruma">{today}</p>
+          <p className="tnum mt-1 text-[13px] text-bruma">
+            <strong className="font-bold text-tinta">{doneCount}</strong> de {tasks.length} hechas
+          </p>
         </div>
+
+        <button
+          onClick={() => {
+            sound.playTap();
+            setIsAddingTask(prev => !prev);
+          }}
+          className="mt-1 grid h-11 w-11 shrink-0 place-items-center rounded-full bg-jade text-lino transition-transform active:scale-90"
+          title="Nueva tarea"
+          aria-label="Nueva tarea"
+        >
+          {isAddingTask ? <X className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+        </button>
       </div>
 
-      {/* FILTER TABS & QUICK ADD BUTTON */}
-      <div className="flex items-center justify-between gap-2">
-        {/* Category Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
-          {(
-            [
-              { id: 'all', label: 'Todas' },
-              { id: 'enfoque', label: '🎯 Enfoque' },
-              { id: 'familia', label: '👨‍👩‍👧 Familia' },
-              { id: 'creativo', label: '🎨 Creativo' },
-              { id: 'activo', label: '⚡ Activo' },
-            ] as const
-          ).map(tab => {
+      {/* Multiplier */}
+      <div
+        className={`flex items-center justify-between gap-4 rounded-2xl px-4 py-3.5 transition-colors duration-300 ${
+          multiplierActive ? 'bg-curcuma/15 ring-1 ring-curcuma/50' : 'ring-1 ring-trazo'
+        }`}
+      >
+        <div>
+          <h4 className="text-[15px] font-bold">
+            Multiplicador x2{' '}
+            {multiplierActive ? (
+              <span className="tnum text-curcuma-hondo">activo {formatTimer(multiplierSecondsLeft)}</span>
+            ) : (
+              <span className="font-medium text-bruma">en espera</span>
+            )}
+          </h4>
+          <p className="mt-0.5 text-[13px] leading-snug text-bruma">
+            Las tareas prioritarias duplican la velocidad de energía y maduración.
+          </p>
+        </div>
+
+        {!multiplierActive && (
+          <button
+            onClick={() => {
+              sound.playMultiplierActivated();
+              onActivateMultiplier();
+            }}
+            className="shrink-0 whitespace-nowrap rounded-full border border-tinta px-4 py-2 text-[13px] font-bold transition-colors hover:bg-tinta hover:text-lino"
+          >
+            Activar x2
+          </button>
+        )}
+      </div>
+
+      {/* New task */}
+      {isAddingTask && (
+        <form
+          onSubmit={handleCreateTask}
+          className="animate-fade-in space-y-5 rounded-2xl bg-lino p-5 ring-1 ring-trazo"
+        >
+          <div>
+            <h4 className="text-[15px] font-bold">Nueva misión real</h4>
+            <p className="text-[13px] text-bruma">Cada tarea que cumples nutre a tu criatura.</p>
+          </div>
+
+          <input
+            type="text"
+            value={newTitle}
+            onChange={e => setNewTitle(e.target.value)}
+            placeholder="Ej: terminar el informe de Física o leer 30 min"
+            required
+            className={field}
+          />
+
+          <input
+            type="text"
+            value={newDesc}
+            onChange={e => setNewDesc(e.target.value)}
+            placeholder="Detalle breve (opcional)"
+            className={field}
+          />
+
+          <div className="grid grid-cols-2 gap-5">
+            <label className="block">
+              <span className="text-xs text-bruma">Tipo de energía</span>
+              <select
+                value={newCategory}
+                onChange={e => setNewCategory(e.target.value as EnergyType)}
+                className={`${field} mt-1`}
+              >
+                <option value="enfoque">Enfoque</option>
+                <option value="familia">Familia</option>
+                <option value="creativo">Creativo</option>
+                <option value="activo">Activo</option>
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="text-xs text-bruma">Puntos de energía</span>
+              <input
+                type="number"
+                min="10"
+                max="100"
+                value={newReward}
+                onChange={e => setNewReward(Number(e.target.value))}
+                className={`${field} tnum mt-1`}
+              />
+            </label>
+          </div>
+
+          <label className="flex cursor-pointer items-center gap-3">
+            <input
+              type="checkbox"
+              checked={newIsHighPriority}
+              onChange={e => setNewIsHighPriority(e.target.checked)}
+              className="h-4 w-4 accent-jade"
+            />
+            <span className="text-[14px]">
+              Alta prioridad <span className="text-bruma">(multiplicador x2)</span>
+            </span>
+          </label>
+
+          <button
+            type="submit"
+            className="w-full rounded-full bg-jade py-3 text-[15px] font-bold text-lino transition-transform active:scale-[0.98]"
+          >
+            Añadir tarea
+          </button>
+        </form>
+      )}
+
+      {/* Filters and tasks share one rule */}
+      <div>
+        <div className="no-scrollbar flex items-center gap-6 overflow-x-auto border-b border-trazo">
+          {FILTERS.map(tab => {
             const isSel = filter === tab.id;
             return (
               <button
@@ -130,10 +216,8 @@ export const TaskList: React.FC<Props> = ({
                   sound.playTap();
                   setFilter(tab.id);
                 }}
-                className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                  isSel
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
+                className={`-mb-px whitespace-nowrap border-b-2 pb-2.5 pt-1 text-[14px] transition-colors ${
+                  isSel ? 'border-tinta font-bold text-tinta' : 'border-transparent text-bruma hover:text-tinta'
                 }`}
               >
                 {tab.label}
@@ -142,124 +226,20 @@ export const TaskList: React.FC<Props> = ({
           })}
         </div>
 
-        {/* Add Task Button */}
-        <button
-          onClick={() => {
-            sound.playTap();
-            setIsAddingTask(prev => !prev);
-          }}
-          className="p-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shrink-0 transition-transform active:scale-95 shadow-md shadow-indigo-500/20"
-          title="Nueva tarea"
-        >
-          {isAddingTask ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-        </button>
-      </div>
-
-      {/* NEW TASK INLINE FORM */}
-      {isAddingTask && (
-        <form
-          onSubmit={handleCreateTask}
-          className="p-4 rounded-2xl bg-slate-900 border border-indigo-500/30 shadow-xl space-y-3 animate-fade-in"
-        >
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-            <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Registrar Nueva Misión Real</span>
-            </h4>
-            <span className="text-[10px] text-slate-400">Nutre a tu criatura</span>
-          </div>
-
-          <div>
-            <input
-              type="text"
-              value={newTitle}
-              onChange={e => setNewTitle(e.target.value)}
-              placeholder="Ej: Terminar informe de Física o Leer 30 min"
-              required
-              className="w-full px-3 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-400"
-            />
-          </div>
-
-          <div>
-            <input
-              type="text"
-              value={newDesc}
-              onChange={e => setNewDesc(e.target.value)}
-              placeholder="Descripción o detalle breve (opcional)"
-              className="w-full px-3 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-400"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-[10px] font-semibold text-slate-400 mb-1">
-                Tipo de Energía
-              </label>
-              <select
-                value={newCategory}
-                onChange={e => setNewCategory(e.target.value as EnergyType)}
-                className="w-full px-2.5 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:border-indigo-400"
-              >
-                <option value="enfoque">🎯 Enfoque (Estudio/Trabajo)</option>
-                <option value="familia">👨‍👩‍👧 Familia (Vínculo/Hogar)</option>
-                <option value="creativo">🎨 Creativo (Arte/Diseño)</option>
-                <option value="activo">⚡ Activo (Movimiento)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-semibold text-slate-400 mb-1">
-                Puntos de Energía
-              </label>
-              <input
-                type="number"
-                min="10"
-                max="100"
-                value={newReward}
-                onChange={e => setNewReward(Number(e.target.value))}
-                className="w-full px-2.5 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-white focus:outline-none focus:border-indigo-400 font-mono"
+        <div className="divide-y divide-trazo/70">
+          {filteredTasks.length === 0 ? (
+            <p className="py-10 text-center text-[14px] text-bruma">No hay tareas en esta categoría.</p>
+          ) : (
+            filteredTasks.map(task => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                multiplierActive={multiplierActive}
+                onToggleComplete={onToggleComplete}
               />
-            </div>
-          </div>
-
-          {/* High Priority Checkbox */}
-          <label className="flex items-center gap-2 cursor-pointer pt-1">
-            <input
-              type="checkbox"
-              checked={newIsHighPriority}
-              onChange={e => setNewIsHighPriority(e.target.checked)}
-              className="rounded bg-slate-800 border-slate-700 text-amber-500 focus:ring-0"
-            />
-            <span className="text-xs text-slate-300 font-medium">
-              Marcar como <strong className="text-amber-300">Alta Prioridad (x2 Multiplicador)</strong>
-            </span>
-          </label>
-
-          <button
-            type="submit"
-            className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/20 transition-all active:scale-95"
-          >
-            Añadir Tarea
-          </button>
-        </form>
-      )}
-
-      {/* TASK CARDS FEED */}
-      <div className="space-y-2">
-        {filteredTasks.length === 0 ? (
-          <div className="text-center py-8 bg-slate-900/40 rounded-2xl border border-slate-800 p-4">
-            <p className="text-xs text-slate-400">No hay tareas en esta categoría.</p>
-          </div>
-        ) : (
-          filteredTasks.map(task => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              multiplierActive={multiplierActive}
-              onToggleComplete={onToggleComplete}
-            />
-          ))
-        )}
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

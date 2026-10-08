@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FamilyMoment } from '../types';
 import { sound } from '../services/sound';
-import { Heart, Users, ShieldCheck, Sparkles, X, CheckCircle, Smile, BookOpen, Coffee, Sun } from 'lucide-react';
+import { X, BookOpen, Coffee, Sun, Footprints } from 'lucide-react';
 
 interface Props {
   isLocked: boolean;
@@ -9,35 +9,25 @@ interface Props {
   onClose: () => void;
 }
 
-export const FamilyReconnectionModal: React.FC<Props> = ({
-  isLocked,
-  onSaveMoment,
-  onClose,
-}) => {
-  const [selectedActivity, setSelectedActivity] = useState<string>(
-    '15 min de charla sin teléfonos'
-  );
+const activities = [
+  { id: '1', title: '15 min de charla sin teléfonos', icon: Coffee },
+  { id: '2', title: 'Cocinando o merendando en equipo', icon: Sun },
+  { id: '3', title: 'Lectura o juego de mesa conjunto', icon: BookOpen },
+  { id: '4', title: 'Caminata y respiración compartida', icon: Footprints },
+];
+
+const emotions: Array<FamilyMoment['emotion']> = ['Conectados', 'Agradecidos', 'Inspirados', 'Tranquilos', 'Divertidos'];
+
+const label = 'block text-[13px] font-bold';
+
+export const FamilyReconnectionModal: React.FC<Props> = ({ isLocked, onSaveMoment, onClose }) => {
+  const [selectedActivity, setSelectedActivity] = useState<string>('15 min de charla sin teléfonos');
   const [parentName, setParentName] = useState<string>('Papá / Mamá');
   const [reflection, setReflection] = useState<string>(
     'Nos sentamos a conversar sobre nuestros momentos favoritos del día y nos dimos un fuerte abrazo.'
   );
   const [emotion, setEmotion] = useState<FamilyMoment['emotion']>('Conectados');
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
-
-  const activities = [
-    { id: '1', title: '15 min de charla sin teléfonos', icon: Coffee },
-    { id: '2', title: 'Cocinando o merendando en equipo', icon: Sun },
-    { id: '3', title: 'Lectura o juego de mesa conjunto', icon: BookOpen },
-    { id: '4', title: 'Caminata y respiración compartida', icon: Users },
-  ];
-
-  const emotions: Array<FamilyMoment['emotion']> = [
-    'Conectados',
-    'Agradecidos',
-    'Inspirados',
-    'Tranquilos',
-    'Divertidos',
-  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,48 +47,41 @@ export const FamilyReconnectionModal: React.FC<Props> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in select-none">
-      <div className="relative w-full max-w-sm bg-slate-900 border border-rose-900/40 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-        {/* Header */}
-        <div className="p-4 border-b border-rose-900/30 bg-rose-950/30 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-rose-500/20 text-rose-400">
-              <Heart className="w-4 h-4 fill-rose-400" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-white">Módulo de Paternidad Presente</h3>
-              <p className="text-[10px] text-rose-300">Misión de Valoración de Momentos</p>
-            </div>
+    <div className="fixed inset-0 z-50 flex animate-fade-in select-none items-end justify-center bg-tinta/55 sm:items-center">
+      <div
+        role="dialog"
+        aria-label="Paternidad presente"
+        className="flex max-h-[94dvh] w-full max-w-[440px] animate-sheet-up flex-col overflow-hidden rounded-t-[28px] bg-lino sm:rounded-[28px]"
+      >
+        <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
+          <div>
+            <h3 className="text-[19px] font-bold leading-tight">Paternidad presente</h3>
+            <p className="text-[13px] text-bruma">Misión de valoración de momentos</p>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            className="-mr-2 grid h-9 w-9 place-items-center rounded-full text-bruma transition-colors hover:bg-tinta/5 hover:text-tinta"
+            aria-label="Cerrar"
           >
-            <X className="w-4 h-4" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Lock Alert Banner if evolution is locked */}
         {isLocked && (
-          <div className="p-3 bg-amber-500/10 border-b border-amber-500/20 flex items-start gap-2.5">
-            <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-amber-200">
-              <strong className="text-white">¡Pausa evolutiva consciente!</strong> Para evitar el
-              aislamiento en pantallas, la criatura requiere un momento de calidad real con los
-              padres para continuar su desarrollo.
+          <div className="mx-5 mb-2 border-l-[3px] border-curcuma pl-4">
+            <p className="text-[14px] leading-relaxed text-bruma">
+              <strong className="font-bold text-tinta">Pausa evolutiva consciente.</strong> Para evitar el
+              aislamiento en pantallas, la criatura requiere un momento de calidad real con los padres para
+              continuar su desarrollo.
             </p>
           </div>
         )}
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-4 overflow-y-auto space-y-4">
-          {/* Activity Selector */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-2">
-              1. Selecciona la Dinámica Compartida
-            </label>
-            <div className="grid grid-cols-2 gap-2">
+        <form onSubmit={handleSubmit} className="space-y-6 overflow-y-auto px-5 pb-6 pt-3">
+          <fieldset>
+            <legend className={label}>Dinámica compartida</legend>
+            <div role="radiogroup" className="mt-1 divide-y divide-trazo/70 border-y border-trazo/70">
               {activities.map(act => {
                 const isSel = selectedActivity === act.title;
                 const Icon = act.icon;
@@ -106,102 +89,86 @@ export const FamilyReconnectionModal: React.FC<Props> = ({
                   <button
                     key={act.id}
                     type="button"
+                    role="radio"
+                    aria-checked={isSel}
                     onClick={() => {
                       sound.playTap();
                       setSelectedActivity(act.title);
                     }}
-                    className={`p-2.5 rounded-xl border text-left transition-all flex flex-col gap-1.5 ${
-                      isSel
-                        ? 'bg-rose-500/20 border-rose-400 text-white shadow-sm'
-                        : 'bg-slate-800/60 border-slate-700/60 text-slate-400 hover:border-slate-600'
-                    }`}
+                    className="flex w-full items-center gap-3 py-3 text-left"
                   >
-                    <Icon className={`w-4 h-4 ${isSel ? 'text-rose-400' : 'text-slate-400'}`} />
-                    <span className="text-[11px] font-medium leading-snug">{act.title}</span>
+                    <Icon className={`h-[18px] w-[18px] shrink-0 ${isSel ? 'text-jade' : 'text-bruma'}`} />
+                    <span className={`flex-1 text-[14px] ${isSel ? 'font-bold' : 'text-bruma'}`}>{act.title}</span>
+                    <span
+                      className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border-[1.5px] ${
+                        isSel ? 'border-jade' : 'border-piedra'
+                      }`}
+                    >
+                      <span className={`h-2.5 w-2.5 rounded-full transition-colors ${isSel ? 'bg-jade' : 'bg-transparent'}`} />
+                    </span>
                   </button>
                 );
               })}
             </div>
-          </div>
+          </fieldset>
 
-          {/* Parent Signature Name */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
-              2. Nombre del Padre / Madre o Tutor
-            </label>
+          <label className="block">
+            <span className={label}>Nombre del padre, madre o tutor</span>
             <input
               type="text"
               value={parentName}
               onChange={e => setParentName(e.target.value)}
               placeholder="Ej: Mamá Laura o Papá Carlos"
               required
-              className="w-full px-3 py-2 rounded-xl bg-slate-800/80 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-400"
+              className="mt-1 w-full border-0 border-b border-piedra bg-transparent px-0 py-2 text-[15px] placeholder:text-bruma/70 focus:border-jade focus:outline-none focus-visible:outline-none"
             />
-          </div>
+          </label>
 
-          {/* Reflection */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
-              3. Registro de Valoración del Momento
-            </label>
+          <label className="block">
+            <span className={label}>Cómo fue el momento</span>
             <textarea
               rows={3}
               value={reflection}
               onChange={e => setReflection(e.target.value)}
               placeholder="¿Qué compartieron? ¿Qué sintieron juntos durante este espacio?"
               required
-              className="w-full p-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-400 resize-none leading-relaxed"
+              className="mt-2 w-full resize-none rounded-xl bg-arena/60 p-3 text-[14px] leading-relaxed ring-1 ring-trazo placeholder:text-bruma/70 focus:outline-none focus:ring-2 focus:ring-jade"
             />
-          </div>
+          </label>
 
-          {/* Emotion pill selector */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-              4. Emoción Primaria Sentida
-            </label>
-            <div className="flex flex-wrap gap-1.5">
+          <fieldset>
+            <legend className={label}>Emoción principal</legend>
+            <div className="mt-2 flex flex-wrap gap-2">
               {emotions.map(em => (
                 <button
                   key={em}
                   type="button"
+                  aria-pressed={emotion === em}
                   onClick={() => {
                     sound.playTap();
                     setEmotion(em);
                   }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
-                    emotion === em
-                      ? 'bg-rose-500 text-white'
-                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                  className={`rounded-full px-3.5 py-1.5 text-[13px] transition-colors ${
+                    emotion === em ? 'bg-tinta font-bold text-lino' : 'text-bruma ring-1 ring-trazo hover:text-tinta'
                   }`}
                 >
                   {em}
                 </button>
               ))}
             </div>
-          </div>
+          </fieldset>
 
-          {/* Submit Button */}
-          <div className="pt-2">
-            <button
-              type="submit"
-              disabled={isSubmitted}
-              className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 text-white font-bold text-sm shadow-lg shadow-rose-500/30 hover:scale-[1.01] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-            >
-              {isSubmitted ? (
-                <>
-                  <CheckCircle className="w-4 h-4 animate-bounce" />
-                  <span>¡Momento Validado y Desbloqueado!</span>
-                </>
-              ) : (
-                <>
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>
-                    {isLocked ? 'Firmar y Liberar Progreso Evolutivo' : 'Guardar Recuerdo Familiar (+100 Familia)'}
-                  </span>
-                </>
-              )}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={isSubmitted}
+            className="w-full rounded-full bg-jade py-3.5 text-[15px] font-bold text-lino transition-transform active:scale-[0.98]"
+          >
+            {isSubmitted
+              ? '¡Momento validado y desbloqueado!'
+              : isLocked
+                ? 'Firmar y liberar progreso evolutivo'
+                : 'Guardar recuerdo familiar (+100 Familia)'}
+          </button>
         </form>
       </div>
     </div>

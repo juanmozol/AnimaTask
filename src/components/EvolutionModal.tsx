@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CreatureState } from '../types';
-import { CREATURE_CATALOG, CreatureEvolutionInfo } from '../data/initialData';
+import { CreatureEvolutionInfo } from '../data/initialData';
 import { sound } from '../services/sound';
-import { Sparkles, Zap, Award, CheckCircle, ArrowRight } from 'lucide-react';
 
 interface Props {
   currentCreature: CreatureState;
@@ -18,7 +17,6 @@ export const EvolutionModal: React.FC<Props> = ({
   onClose,
 }) => {
   const [phase, setPhase] = useState<'charging' | 'flash' | 'revealed'>('charging');
-  const [confettiActive, setConfettiActive] = useState(false);
 
   useEffect(() => {
     // Start charge audio & animation
@@ -31,7 +29,6 @@ export const EvolutionModal: React.FC<Props> = ({
     const revealTimer = setTimeout(() => {
       setPhase('revealed');
       sound.playEvolutionFanfare();
-      setConfettiActive(true);
     }, 2800);
 
     return () => {
@@ -45,133 +42,97 @@ export const EvolutionModal: React.FC<Props> = ({
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-xl animate-fade-in select-none">
-      {/* Background Rotating Cosmic Aura */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div
-          className={`absolute -inset-[50%] opacity-40 bg-[conic-gradient(from_0deg,#38bdf8,#a855f7,#f43f5e,#10b981,#38bdf8)] transition-transform duration-1000 ${
-            phase === 'charging' ? 'animate-[spin_4s_linear_infinite]' : 'animate-[spin_12s_linear_infinite]'
-          }`}
-          style={{ filter: 'blur(90px)' }}
-        />
-        {/* Particle Stars */}
-        <div className="absolute inset-0 bg-[radial-gradient(#ffffff_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-25" />
-      </div>
+  const pathColor =
+    nextCreatureInfo.tier <= 1
+      ? 'var(--color-jade)'
+      : nextCreatureInfo.alignment === 'shadow'
+        ? 'var(--color-humo)'
+        : 'var(--color-curcuma)';
 
-      {/* Screen White Flash */}
-      {phase === 'flash' && (
-        <div className="absolute inset-0 bg-white z-50 animate-ping opacity-90 duration-300" />
+  return (
+    <div className="fixed inset-0 z-50 select-none overflow-y-auto bg-arena animate-fade-in">
+      <svg width="0" height="0" className="absolute" aria-hidden="true" focusable="false">
+        <defs>
+          <clipPath id="duna-evo" clipPathUnits="objectBoundingBox">
+            <path d="M0,0 H1 V0.945 C0.86,0.99 0.73,0.94 0.57,0.962 C0.4,0.985 0.2,0.935 0,0.972 Z" />
+          </clipPath>
+        </defs>
+      </svg>
+
+      {phase !== 'revealed' && (
+        <div className="grid min-h-full place-items-center px-8">
+          <div className="flex flex-col items-center text-center">
+            {/* One ring, drawn in a single stroke while the form changes */}
+            <svg viewBox="0 0 120 120" className="h-44 w-44" aria-hidden="true">
+              <circle cx="60" cy="60" r="48" fill="none" stroke="var(--color-trazo)" strokeWidth="2" />
+              <circle
+                cx="60"
+                cy="60"
+                r="48"
+                fill="none"
+                stroke="var(--color-tinta)"
+                strokeWidth="7"
+                strokeLinecap="round"
+                pathLength={100}
+                strokeDasharray="100 100"
+                className="animate-draw"
+                transform="rotate(-100 60 60)"
+              />
+            </svg>
+
+            <p className="mt-8 text-[13px] text-bruma">Canalizando esencia...</p>
+            <h3 className="mt-1 text-2xl font-bold tracking-tight">Tu criatura está cambiando</h3>
+            <p className="mt-2 max-w-[17rem] text-[14px] leading-relaxed text-bruma">
+              Tus hábitos y energías acumuladas están reconfigurando a tu compañero.
+            </p>
+          </div>
+        </div>
       )}
 
-      {/* Main Container */}
-      <div className="relative w-full max-w-sm bg-slate-900/90 border border-white/20 rounded-3xl p-6 shadow-2xl flex flex-col items-center text-center z-10 overflow-hidden">
-        {/* Glow Halo behind Creature */}
-        <div
-          className="absolute w-64 h-64 rounded-full blur-3xl opacity-60 -top-10 transition-all duration-700"
-          style={{ backgroundColor: nextCreatureInfo.colors.primary }}
-        />
+      {phase === 'flash' && <div className="fixed inset-0 z-[60] animate-fade-in bg-lino" />}
 
-        {phase === 'charging' && (
-          <div className="flex flex-col items-center py-8 space-y-6">
-            <div className="relative">
-              {/* Outer pulsing ring */}
-              <div className="w-36 h-36 rounded-full border-4 border-indigo-500/40 animate-ping" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-28 h-28 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/50 animate-pulse">
-                  <Zap className="w-12 h-12 text-white animate-bounce" />
-                </div>
+      {phase === 'revealed' && (
+        <div className="mx-auto flex min-h-full w-full max-w-[440px] animate-fade-in flex-col">
+          <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-piedra/40 [clip-path:url(#duna-evo)]">
+            {nextCreatureInfo.imageUrl ? (
+              <img
+                src={nextCreatureInfo.imageUrl}
+                alt={nextCreatureInfo.name}
+                draggable={false}
+                className="h-full w-full object-cover [filter:sepia(0.2)_saturate(0.94)]"
+              />
+            ) : (
+              <div className="grid h-full w-full place-items-center bg-lino">
+                <span className="text-7xl font-bold text-trazo">{nextCreatureInfo.name.charAt(0)}</span>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <span className="text-xs uppercase tracking-widest text-indigo-400 font-black animate-pulse">
-                Canalizando Esencia...
-              </span>
-              <h3 className="text-xl font-bold text-white">¡Mutación en Proceso!</h3>
-              <p className="text-xs text-slate-300 max-w-xs">
-                Tus hábitos y energías acumuladas están reconfigurando la estructura de tu compañero...
-              </p>
-            </div>
-
-            {/* Convergence indicator */}
-            <div className="w-48 h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
-              <div className="h-full bg-gradient-to-r from-cyan-400 via-purple-400 to-amber-400 animate-[pulse_1s_ease-in-out_infinite] w-full" />
-            </div>
+            )}
           </div>
-        )}
 
-        {phase === 'revealed' && (
-          <div className="flex flex-col items-center space-y-4 py-2 w-full animate-fade-in">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-bold tracking-wide">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>¡EVOLUCIÓN COMPLETADA!</span>
+          <div className="flex flex-1 flex-col px-5 pb-8 pt-5">
+            <p className="text-[13px] text-bruma">{currentCreature.name} evolucionó a</p>
+            <h2 className="mt-1 text-[32px] font-bold leading-tight tracking-tight">{nextCreatureInfo.name}</h2>
+            <p className="text-[15px] text-bruma">{nextCreatureInfo.title}</p>
+            <p className="mt-2 flex items-center gap-1.5 text-[13px] text-bruma">
+              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: pathColor }} />
+              {nextCreatureInfo.elementLabel}
+            </p>
+
+            <p className="mt-5 text-[15px] leading-[1.7]">{nextCreatureInfo.description}</p>
+
+            <div className="mb-8 mt-5 border-l-[3px] border-jade pl-4">
+              <p className="text-[13px] text-bruma">Nueva habilidad desbloqueada</p>
+              <p className="text-[15px] font-bold leading-snug">{nextCreatureInfo.specialAbility}</p>
             </div>
 
-            {/* Evolution Step Visualizer */}
-            <div className="flex items-center gap-2 text-xs text-slate-400">
-              <span className="font-medium text-slate-300">{currentCreature.name}</span>
-              <ArrowRight className="w-3.5 h-3.5 text-amber-400" />
-              <span className="font-bold text-white">{nextCreatureInfo.name}</span>
-            </div>
-
-            {/* Creature Avatar Glow Box */}
-            <div
-              className="w-52 h-40 rounded-2xl flex items-center justify-center p-1.5 border border-white/20 shadow-2xl relative my-1 overflow-hidden"
-              style={{
-                background: `radial-gradient(circle, ${nextCreatureInfo.colors.glow}, rgba(15, 23, 42, 0.9))`,
-              }}
-            >
-              {nextCreatureInfo.imageUrl ? (
-                <img
-                  src={nextCreatureInfo.imageUrl}
-                  alt={nextCreatureInfo.name}
-                  className="w-full h-full object-cover rounded-xl"
-                />
-              ) : (
-                <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center">
-                  <span className="text-4xl animate-bounce">✨</span>
-                </div>
-              )}
-            </div>
-
-            {/* Title & Lore */}
-            <div className="space-y-1">
-              <h2 className="text-2xl font-black text-white tracking-tight">
-                {nextCreatureInfo.name}
-              </h2>
-              <p className="text-xs font-semibold text-cyan-400">{nextCreatureInfo.title}</p>
-              <p className={`text-[10px] font-bold uppercase tracking-wider ${nextCreatureInfo.alignment === 'shadow' ? 'text-emerald-400' : 'text-amber-400'}`}>
-                {nextCreatureInfo.elementLabel}
-              </p>
-              <p className="text-xs text-slate-300 px-2 line-clamp-2 mt-1">
-                {nextCreatureInfo.description}
-              </p>
-            </div>
-
-            {/* Newly Unlocked Ability Card */}
-            <div className="w-full bg-slate-800/90 border border-slate-700/80 rounded-xl p-3 text-left space-y-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
-                <Award className="w-3.5 h-3.5" />
-                <span>Nueva Habilidad Desbloqueada:</span>
-              </div>
-              <p className="text-xs text-slate-200 font-medium">
-                {nextCreatureInfo.specialAbility}
-              </p>
-            </div>
-
-            {/* Finish Button */}
             <button
               onClick={handleFinish}
-              className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 text-white font-bold text-sm shadow-lg shadow-purple-500/30 hover:scale-[1.02] active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+              className="mt-auto w-full rounded-full bg-jade py-3.5 text-[15px] font-bold text-lino transition-transform active:scale-[0.98]"
             >
-              <CheckCircle className="w-4 h-4" />
-              <span>Abrazar Nueva Forma</span>
+              Abrazar nueva forma
             </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

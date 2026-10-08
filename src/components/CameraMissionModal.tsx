@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CameraMission, EnergyType } from '../types';
+import { CameraMission } from '../types';
 import { sound } from '../services/sound';
-import { Camera, RefreshCw, CheckCircle2, Scan, Sparkles, X, ShieldAlert, Zap } from 'lucide-react';
+import { Camera, CheckCircle2, X } from 'lucide-react';
 
 interface Props {
   mission: CameraMission;
@@ -9,6 +9,8 @@ interface Props {
   onComplete: (mission: CameraMission, earnedEnergy: number) => void;
   onClose: () => void;
 }
+
+const BRACKET = 'absolute h-6 w-6 border-white/80';
 
 export const CameraMissionModal: React.FC<Props> = ({
   mission,
@@ -22,7 +24,7 @@ export const CameraMissionModal: React.FC<Props> = ({
   const [scanProgress, setScanProgress] = useState<number>(0);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [scanSuccess, setScanSuccess] = useState<boolean>(false);
-  const [analysisText, setAnalysisText] = useState<string>('Esperando encuadre óptimo...');
+  const [analysisText, setAnalysisText] = useState<string>('Encuadra el color y toma la foto.');
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -97,23 +99,23 @@ export const CameraMissionModal: React.FC<Props> = ({
     }
 
     // Step-by-step software recognition animation
-    setAnalysisText('Segmentando espectro de color ambiental...');
-    
+    setAnalysisText('Mirando los colores a tu alrededor...');
+
     setTimeout(() => {
       setScanProgress(35);
-      setAnalysisText(`Detectando patrón cromático: ${mission.targetObjectDescription}...`);
+      setAnalysisText(`Buscando: ${mission.targetObjectDescription}...`);
     }, 600);
 
     setTimeout(() => {
       setScanProgress(75);
-      setAnalysisText('Calculando vector de coincidencia visual...');
+      setAnalysisText('Comparando tonos...');
     }, 1200);
 
     setTimeout(() => {
       setScanProgress(100);
       setIsScanning(false);
       setScanSuccess(true);
-      setAnalysisText('¡Validación exitosa! Coincidencia: 98.7%');
+      setAnalysisText('¡Validado! Coincidencia 98.7%');
       sound.playTaskComplete(multiplierActive);
     }, 1800);
   };
@@ -127,164 +129,112 @@ export const CameraMissionModal: React.FC<Props> = ({
   const finalReward = multiplierActive ? mission.energyReward * 2 : mission.energyReward;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in select-none">
-      <div className="relative w-full max-w-sm bg-slate-900 border border-slate-700/80 rounded-3xl overflow-hidden shadow-2xl flex flex-col">
-        {/* Top Header Bar */}
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-purple-500/20 text-purple-400">
-              <Camera className="w-4 h-4" />
-            </div>
+    <div className="fixed inset-0 z-50 flex animate-fade-in select-none items-end justify-center bg-tinta/55 sm:items-center">
+      <div
+        role="dialog"
+        aria-label="Misión de cámara creativa"
+        className="flex max-h-[96dvh] w-full max-w-[440px] animate-sheet-up flex-col overflow-y-auto rounded-t-[28px] bg-lino sm:rounded-[28px]"
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
+          <div className="flex items-center gap-3">
+            <span
+              className="h-9 w-9 shrink-0 rounded-[48%_52%_50%_50%/54%_46%_54%_46%]"
+              style={{ backgroundColor: mission.targetColor }}
+            />
             <div>
-              <h3 className="text-sm font-bold text-white">Misión de Cámara Creativa</h3>
-              <p className="text-[10px] text-slate-400">{mission.title}</p>
+              <h3 className="text-[17px] font-bold leading-tight">Misión de cámara creativa</h3>
+              <p className="text-[13px] text-bruma">{mission.title}</p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            className="-mr-2 grid h-9 w-9 place-items-center rounded-full text-bruma transition-colors hover:bg-tinta/5 hover:text-tinta"
+            aria-label="Cerrar"
           >
-            <X className="w-4 h-4" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Prompt Card */}
-        <div className="p-3 bg-purple-950/40 border-b border-purple-900/40 flex items-start gap-2.5">
-          <Sparkles className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-xs font-semibold text-purple-200">{mission.prompt}</p>
-            <p className="text-[10px] text-purple-400 mt-0.5">
-              Objetivo: {mission.targetObjectDescription}
-            </p>
-          </div>
+        {/* Prompt */}
+        <div className="px-5 pb-4">
+          <p className="text-[15px] font-medium leading-snug">{mission.prompt}</p>
+          <p className="mt-1 text-[13px] text-bruma">Objetivo: {mission.targetObjectDescription}</p>
         </div>
 
-        {/* Viewfinder Area */}
-        <div className="relative w-full h-72 bg-black flex items-center justify-center overflow-hidden">
+        {/* Viewfinder */}
+        <div className="relative h-72 w-full overflow-hidden bg-[#241e19]">
           {hasCameraStream ? (
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-full object-cover"
-            />
+            <video ref={videoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
           ) : (
-            // Digital High-Tech AR Simulation Viewport
-            <div className="relative w-full h-full bg-slate-950 flex flex-col items-center justify-center p-4 overflow-hidden">
-              {/* Animated camera lens grid */}
-              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#a855f7_1px,transparent_1px)] [background-size:16px_16px]" />
-              
-              {/* Virtual Target Element */}
+            <div className="relative flex h-full w-full flex-col items-center justify-center">
               <div
-                className="w-32 h-32 rounded-2xl flex flex-col items-center justify-center border-2 border-dashed transition-all duration-500 animate-pulse"
-                style={{
-                  borderColor: mission.targetColor,
-                  backgroundColor: `${mission.targetColor}20`,
-                }}
-              >
-                <div
-                  className="w-16 h-16 rounded-xl flex items-center justify-center shadow-lg"
-                  style={{ backgroundColor: mission.targetColor }}
-                >
-                  <Sparkles className="w-8 h-8 text-white animate-spin" style={{ animationDuration: '8s' }} />
-                </div>
-                <span className="text-[10px] font-mono text-white mt-2 font-semibold">
-                  OBJ_DETECTED
-                </span>
-              </div>
-
-              <span className="text-[10px] text-slate-400 mt-3 font-mono">
-                [Sensor AR Óptico Calibrado]
-              </span>
+                className="h-36 w-36 animate-breathe rounded-[48%_52%_50%_50%/54%_46%_54%_46%] opacity-90"
+                style={{ backgroundColor: mission.targetColor }}
+              />
+              <p className="absolute inset-x-6 bottom-5 text-center text-xs leading-snug text-lino/70">
+                {streamError ?? 'Modo simulado: toma la foto para validar el color.'}
+              </p>
             </div>
           )}
 
-          {/* AR HUD Overlay Lines and Reticle */}
-          <div className="absolute inset-4 pointer-events-none border border-white/20 rounded-2xl flex flex-col justify-between p-3">
-            {/* Corner Markers */}
-            <div className="flex justify-between items-center text-[9px] font-mono text-cyan-400">
-              <span>SCAN_MODE: 4K_AR</span>
-              <span>ISO: AUTO</span>
-            </div>
-
-            {/* Center Reticle */}
-            <div className="self-center flex items-center justify-center">
-              <Scan
-                className={`w-16 h-16 transition-colors duration-300 ${
-                  scanSuccess ? 'text-emerald-400' : isScanning ? 'text-amber-400 animate-spin' : 'text-purple-400/80'
-                }`}
-              />
-            </div>
-
-            <div className="flex justify-between items-center text-[9px] font-mono text-cyan-400">
-              <span>SPECT_MATCH: {scanSuccess ? '98.7%' : isScanning ? `${scanProgress}%` : 'READY'}</span>
-              <span>BAT: 99%</span>
-            </div>
+          {/* Framing corners */}
+          <div className="pointer-events-none absolute inset-6">
+            <span className={`${BRACKET} left-0 top-0 rounded-tl-md border-l-2 border-t-2`} />
+            <span className={`${BRACKET} right-0 top-0 rounded-tr-md border-r-2 border-t-2`} />
+            <span className={`${BRACKET} bottom-0 left-0 rounded-bl-md border-b-2 border-l-2`} />
+            <span className={`${BRACKET} bottom-0 right-0 rounded-br-md border-b-2 border-r-2`} />
           </div>
 
-          {/* Laser Sweep Line during scanning */}
           {isScanning && (
-            <div className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_15px_#22d3ee] animate-[bounce_1.5s_infinite]" />
+            <div className="pointer-events-none absolute inset-x-8 top-1/2 h-0.5 animate-scan rounded-full bg-white/80 shadow-[0_0_14px_rgba(255,255,255,0.7)]" />
           )}
 
-          {/* Success Overlay Banner */}
           {scanSuccess && (
-            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 animate-fade-in">
-              <div className="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center text-emerald-400 mb-3 animate-bounce">
-                <CheckCircle2 className="w-10 h-10" />
-              </div>
-              <h4 className="text-base font-bold text-white">¡Misión Validada!</h4>
-              <p className="text-xs text-slate-300 text-center max-w-xs mt-1">
+            <div className="absolute inset-0 flex animate-fade-in flex-col items-center justify-center gap-1 bg-tinta/75 px-6 text-center">
+              <CheckCircle2 className="h-12 w-12 text-jade-claro" strokeWidth={1.5} />
+              <h4 className="mt-2 text-xl font-bold text-lino">¡Misión validada!</h4>
+              <p className="max-w-xs text-sm text-lino/75">
                 La IA reconoció con éxito el elemento de la misión creativa.
               </p>
-
-              <div className="mt-3 px-3 py-1.5 rounded-xl bg-purple-500/20 border border-purple-400/40 flex items-center gap-2 text-purple-300 text-xs font-bold">
-                <Sparkles className="w-4 h-4" />
-                <span>+{finalReward} Energía {mission.rewardCategory}</span>
-                {multiplierActive && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500 text-slate-950 font-black">
-                    x2 BOOST
-                  </span>
-                )}
-              </div>
+              <p className="mt-3 text-[15px] font-bold text-lino">
+                +{finalReward} energía {mission.rewardCategory}
+                {multiplierActive && <span className="ml-2 text-curcuma">x2</span>}
+              </p>
             </div>
           )}
         </div>
 
-        {/* Footer Controls */}
-        <div className="p-4 bg-slate-900 border-t border-slate-800 flex flex-col gap-3">
-          {/* Status Text */}
+        {/* Footer */}
+        <div className="flex flex-col gap-4 px-5 pb-6 pt-4">
           <div className="text-center">
-            <p className="text-xs font-medium text-slate-300">{analysisText}</p>
+            <p className="text-[14px] text-bruma" aria-live="polite">
+              {analysisText}
+            </p>
             {isScanning && (
-              <div className="w-full h-1 bg-slate-800 rounded-full mt-2 overflow-hidden">
-                <div
-                  className="h-full bg-cyan-400 transition-all duration-300"
-                  style={{ width: `${scanProgress}%` }}
-                />
+              <div className="mx-auto mt-3 h-[3px] w-full max-w-[16rem] overflow-hidden rounded-full bg-trazo">
+                <div className="h-full rounded-full bg-jade transition-all duration-300" style={{ width: `${scanProgress}%` }} />
               </div>
             )}
           </div>
 
-          {/* Action Button */}
           {scanSuccess ? (
             <button
               onClick={handleClaimReward}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/25 hover:scale-[1.02] active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-jade py-3.5 text-[15px] font-bold text-lino transition-transform active:scale-[0.98]"
             >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Reclamar Recompensa y Regresar</span>
+              <CheckCircle2 className="h-[18px] w-[18px]" />
+              <span>Reclamar recompensa y regresar</span>
             </button>
           ) : (
             <button
               onClick={handleCaptureAndScan}
               disabled={isScanning}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-purple-500/30 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-tinta py-3.5 text-[15px] font-bold text-lino transition-transform active:scale-[0.98] disabled:opacity-50"
             >
-              <Scan className="w-4 h-4" />
-              <span>{isScanning ? 'Analizando captura...' : 'Tomar Foto y Escanear'}</span>
+              <Camera className="h-[18px] w-[18px]" />
+              <span>{isScanning ? 'Analizando captura...' : 'Tomar foto y escanear'}</span>
             </button>
           )}
         </div>

@@ -1,6 +1,5 @@
 import React from 'react';
 import { CreatureAlignment, EvolutionTier } from '../types';
-import { Sun, Moon } from 'lucide-react';
 
 interface Props {
   balance: number;
@@ -8,7 +7,7 @@ interface Props {
   alignment: CreatureAlignment;
 }
 
-// The marker saturates at +/-40 so a few good (or bad) days are enough to see it move.
+// The stone saturates at +/-40 so a few good (or bad) days are enough to see it move.
 const RANGE = 40;
 
 export const BalanceMeter: React.FC<Props> = ({ balance, tier, alignment }) => {
@@ -31,37 +30,34 @@ export const BalanceMeter: React.FC<Props> = ({ balance, tier, alignment }) => {
     : 'Completa tareas y registra momentos en familia para inclinarte a la Armonía. Dejar tareas pendientes o pasar días sin familia te acerca a la Sombra. La senda se decide al evolucionar de Principal.';
 
   return (
-    <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-md">
-      <div className="flex items-center justify-between mb-2.5">
-        <h3 className="text-xs font-bold text-white tracking-tight">Balance de hábitos</h3>
-        <span
-          className={`text-[11px] font-semibold ${shown === 'harmony' ? 'text-amber-300' : 'text-emerald-300'}`}
-        >
+    <section className="px-5 pt-9">
+      <div className="flex items-baseline justify-between gap-3">
+        <h3 className="text-[15px] font-bold">Balance de hábitos</h3>
+        <span className={`text-[13px] font-bold ${shown === 'harmony' ? 'text-curcuma-hondo' : 'text-humo'}`}>
           {headline}
         </span>
       </div>
 
-      <div className="flex items-center gap-2">
-        <Moon className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-        <div className="relative flex-1 h-2.5 rounded-full bg-gradient-to-r from-emerald-600/70 via-slate-700 to-amber-500/80 border border-slate-800">
-          <div
-            className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full border-2 border-white shadow-lg transition-all duration-500 ${
-              pathLocked ? 'bg-slate-500' : shown === 'harmony' ? 'bg-amber-400' : 'bg-emerald-400'
-            }`}
-            style={{ left: `${pct}%` }}
-            aria-label={`Balance ${balance}`}
-          />
-        </div>
-        <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+      {/* A line between the two paths, and a stone that rests where the habits have put it */}
+      <div className="relative mt-5 h-6">
+        <div className="absolute inset-x-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-gradient-to-r from-humo/60 via-trazo to-curcuma/75" />
+        <div className="absolute left-1/2 top-1/2 h-3 w-px -translate-y-1/2 bg-piedra" />
+        <div
+          aria-label={`Balance ${balance}`}
+          className={`absolute top-1/2 h-[18px] w-6 -translate-x-1/2 -translate-y-1/2 rounded-[50%_46%_52%_48%/58%_50%_50%_42%] ring-[5px] ring-arena transition-all duration-700 ease-out ${
+            pathLocked ? 'bg-bruma' : 'bg-tinta'
+          }`}
+          style={{ left: `${pct}%` }}
+        />
       </div>
 
-      <div className="flex justify-between text-[10px] text-slate-500 mt-1.5 font-mono">
+      <div className="mt-1 flex justify-between text-xs text-bruma">
         <span>Sombra</span>
-        <span>{balance > 0 ? `+${balance}` : balance}</span>
+        <span className="tnum font-bold text-tinta">{balance > 0 ? `+${balance}` : balance}</span>
         <span>Armonía</span>
       </div>
 
-      <p className="text-[11px] text-slate-400 leading-relaxed mt-2.5 pt-2.5 border-t border-slate-800/80">{hint}</p>
-    </div>
+      <p className="mt-4 text-[13px] leading-relaxed text-bruma">{hint}</p>
+    </section>
   );
 };

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { generateStandaloneHtml } from '../utils/generateStandaloneHtml';
 import { sound } from '../services/sound';
-import { Download, Copy, Check, FileCode, X, ExternalLink, Globe } from 'lucide-react';
+import { Download, Copy, Check, X } from 'lucide-react';
 
 interface Props {
   onClose: () => void;
@@ -38,99 +38,89 @@ export const ExportModal: React.FC<Props> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-fade-in select-none">
-      <div className="relative w-full max-w-lg bg-slate-900 border border-slate-700/80 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-        {/* Header */}
-        <div className="p-4 border-b border-slate-800 bg-slate-900/90 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-indigo-500/20 text-indigo-400">
-              <Globe className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-white">Exportar para GitHub Pages</h3>
-              <p className="text-[10px] text-slate-400">Archivo único HTML + CSS + JS autónomo</p>
-            </div>
+    <div className="fixed inset-0 z-50 flex animate-fade-in items-end justify-center bg-tinta/55 sm:items-center">
+      <div
+        role="dialog"
+        aria-label="Exportar HTML"
+        className="flex max-h-[92dvh] w-full max-w-[440px] animate-sheet-up flex-col overflow-hidden rounded-t-[28px] bg-lino sm:rounded-[28px]"
+      >
+        <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
+          <div>
+            <h3 className="text-[19px] font-bold leading-tight">Exportar HTML</h3>
+            <p className="text-[13px] text-bruma">Un solo archivo con todo incluido</p>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            className="-mr-2 grid h-9 w-9 place-items-center rounded-full text-bruma transition-colors hover:bg-tinta/5 hover:text-tinta"
+            aria-label="Cerrar"
           >
-            <X className="w-4 h-4" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Content Body */}
-        <div className="p-5 space-y-4 overflow-y-auto">
-          {/* Quick Explanation */}
-          <div className="p-3.5 rounded-2xl bg-indigo-950/40 border border-indigo-900/40 space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-indigo-300">
-              <FileCode className="w-4 h-4" />
-              <span>Entregable 100% Autónomo en 1 Solo Archivo</span>
-            </div>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Cumpliendo el requerimiento del proyecto, este botón genera un único archivo{' '}
-              <code className="text-indigo-300 bg-indigo-950 px-1 py-0.5 rounded font-mono">
-                index.html
-              </code>{' '}
-              que contiene todo el CSS, scripts, gráficos SVG interactivos y sintetizador Web Audio.
-              ¡No requiere npm install, servidor ni empaquetadores!
-            </p>
-          </div>
+        <div className="space-y-6 overflow-y-auto px-5 pb-6 pt-2">
+          <p className="text-[14px] leading-relaxed text-bruma">
+            Este botón genera un único archivo <code className="rounded bg-arena px-1.5 py-0.5 text-[13px] text-tinta">index.html</code>{' '}
+            con todo el CSS, los scripts y el sintetizador de audio. No requiere npm install, servidor ni
+            empaquetadores.
+          </p>
 
-          {/* Steps for GitHub Pages */}
-          <div className="space-y-2 text-xs text-slate-300">
-            <h4 className="font-bold text-white uppercase text-[10px] tracking-wider">
-              Pasos para Desplegar en GitHub Pages en 2 Minutos:
-            </h4>
-            <ol className="list-decimal list-inside space-y-1 text-slate-400 pl-1 leading-relaxed">
-              <li>Haz clic en <strong className="text-white">Descargar index.html</strong> abajo.</li>
-              <li>Crea o abre tu repositorio en GitHub y sube el archivo a la raíz (<code className="text-indigo-300">/</code>).</li>
-              <li>Ve a <strong className="text-white">Settings → Pages</strong> en tu repositorio.</li>
-              <li>En <strong className="text-white">Branch</strong>, selecciona <code className="text-indigo-300">main</code> y carpeta <code className="text-indigo-300">/(root)</code>, luego guarda.</li>
-              <li>¡Listo! Tu prototipo estará publicado en tu URL de GitHub Pages al instante.</li>
+          <div>
+            <h4 className="text-[13px] font-bold">Cómo publicarlo en GitHub Pages</h4>
+            <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-[14px] leading-relaxed text-bruma marker:text-piedra">
+              <li>
+                Toca <strong className="font-bold text-tinta">Descargar index.html</strong>.
+              </li>
+              <li>Sube el archivo a la raíz de tu repositorio en GitHub.</li>
+              <li>
+                Ve a <strong className="font-bold text-tinta">Settings, Pages</strong>.
+              </li>
+              <li>
+                En <strong className="font-bold text-tinta">Branch</strong> elige <code className="text-tinta">main</code> y la
+                carpeta <code className="text-tinta">/(root)</code>, y guarda.
+              </li>
+              <li>Tu prototipo queda publicado en la URL de GitHub Pages.</li>
             </ol>
           </div>
 
-          {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-3 pt-2">
+          <div className="grid grid-cols-2 gap-3">
             <button
               onClick={handleDownload}
-              className="py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 transition-transform active:scale-95"
+              className="flex items-center justify-center gap-2 rounded-full bg-jade px-4 py-3 text-[14px] font-bold text-lino transition-transform active:scale-[0.98]"
             >
-              <Download className="w-4 h-4" />
-              <span>Descargar index.html</span>
+              <Download className="h-4 w-4" />
+              <span>Descargar</span>
             </button>
 
             <button
               onClick={handleCopy}
-              className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 flex items-center justify-center gap-2 transition-colors"
+              className="flex items-center justify-center gap-2 rounded-full px-4 py-3 text-[14px] font-bold ring-1 ring-tinta transition-colors hover:bg-tinta hover:text-lino"
             >
               {copied ? (
                 <>
-                  <Check className="w-4 h-4 text-emerald-400" />
-                  <span className="text-emerald-400">¡Copiado!</span>
+                  <Check className="h-4 w-4" />
+                  <span>¡Copiado!</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-4 h-4 text-slate-300" />
-                  <span>Copiar Código</span>
+                  <Copy className="h-4 w-4" />
+                  <span>Copiar código</span>
                 </>
               )}
             </button>
           </div>
 
-          {/* Toggle Code Preview */}
-          <div className="pt-2">
+          <div>
             <button
               onClick={() => setViewSource(prev => !prev)}
-              className="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 underline"
+              className="text-[13px] font-bold text-jade underline decoration-jade/40 underline-offset-4"
             >
-              {viewSource ? 'Ocultar vista previa de código' : 'Ver código HTML unificado'}
+              {viewSource ? 'Ocultar código' : 'Ver código HTML'}
             </button>
 
             {viewSource && (
-              <pre className="mt-2 p-3 bg-slate-950 rounded-xl border border-slate-800 text-[10px] text-slate-400 font-mono overflow-x-auto max-h-48 select-text">
+              <pre className="mt-3 max-h-48 select-text overflow-auto rounded-xl bg-tinta p-3 font-mono text-[10px] leading-relaxed text-lino/80">
                 {htmlContent}
               </pre>
             )}

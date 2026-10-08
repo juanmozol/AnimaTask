@@ -1,7 +1,6 @@
 import React from 'react';
 import { Task, EnergyType } from '../types';
 import { sound } from '../services/sound';
-import { Target, Heart, Palette, Zap, Check, Flame } from 'lucide-react';
 
 interface Props {
   task: Task;
@@ -9,128 +8,97 @@ interface Props {
   onToggleComplete: (task: Task) => void;
 }
 
-export const TaskCard: React.FC<Props> = ({
-  task,
-  multiplierActive,
-  onToggleComplete,
-}) => {
-  const getCategoryConfig = (cat: EnergyType) => {
-    switch (cat) {
-      case 'enfoque':
-        return {
-          label: 'Enfoque',
-          icon: Target,
-          color: 'text-cyan-400',
-          border: 'border-cyan-500/30',
-          badgeBg: 'bg-cyan-500/10 text-cyan-300',
-        };
-      case 'familia':
-        return {
-          label: 'Familia',
-          icon: Heart,
-          color: 'text-rose-400',
-          border: 'border-rose-500/30',
-          badgeBg: 'bg-rose-500/10 text-rose-300',
-        };
-      case 'creativo':
-        return {
-          label: 'Creativo',
-          icon: Palette,
-          color: 'text-purple-400',
-          border: 'border-purple-500/30',
-          badgeBg: 'bg-purple-500/10 text-purple-300',
-        };
-      case 'activo':
-        return {
-          label: 'Activo',
-          icon: Zap,
-          color: 'text-emerald-400',
-          border: 'border-emerald-500/30',
-          badgeBg: 'bg-emerald-500/10 text-emerald-300',
-        };
-    }
-  };
+const CATEGORY: Record<EnergyType, { label: string; dot: string }> = {
+  enfoque: { label: 'Enfoque', dot: 'bg-anil' },
+  familia: { label: 'Familia', dot: 'bg-rubia' },
+  creativo: { label: 'Creativo', dot: 'bg-cochinilla' },
+  activo: { label: 'Activo', dot: 'bg-musgo' },
+};
 
-  const cfg = getCategoryConfig(task.category);
-  const Icon = cfg.icon;
+// An open circle that closes in one stroke when the task is done, like an enso.
+const CheckRing: React.FC<{ done: boolean }> = ({ done }) => (
+  <svg viewBox="0 0 28 28" className="mt-0.5 h-7 w-7 shrink-0" aria-hidden="true">
+    <circle cx="14" cy="14" r="11" fill={done ? 'var(--color-jade)' : 'none'} fillOpacity={0.12} stroke="var(--color-piedra)" strokeWidth="1.5" />
+    <circle
+      cx="14"
+      cy="14"
+      r="11"
+      fill="none"
+      stroke="var(--color-jade)"
+      strokeWidth="2.6"
+      strokeLinecap="round"
+      pathLength={100}
+      strokeDasharray={`${done ? 93 : 0.01} 100`}
+      strokeOpacity={done ? 1 : 0}
+      transform="rotate(-120 14 14)"
+      style={{ transition: 'stroke-dasharray 450ms ease-out, stroke-opacity 150ms' }}
+    />
+    <path
+      d="M9.6 14.4 l3 3 l5.8 -6.4"
+      fill="none"
+      stroke="var(--color-jade)"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ opacity: done ? 1 : 0, transition: 'opacity 300ms ease-out 150ms' }}
+    />
+  </svg>
+);
+
+export const TaskCard: React.FC<Props> = ({ task, multiplierActive, onToggleComplete }) => {
+  const cfg = CATEGORY[task.category];
 
   const isBoosted = multiplierActive || task.isHighPriority;
   const rewardAmount = isBoosted ? task.energyReward * 2 : task.energyReward;
 
-  const handleClick = () => {
+  const handleToggle = () => {
     sound.playTap();
     onToggleComplete(task);
   };
 
   return (
     <div
-      onClick={handleClick}
-      className={`group relative p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer select-none ${
-        task.isCompleted
-          ? 'bg-slate-900/40 border-slate-800/60 opacity-65'
-          : 'bg-slate-900/90 border-slate-800 hover:border-slate-700 hover:shadow-lg'
+      role="checkbox"
+      aria-checked={task.isCompleted}
+      tabIndex={0}
+      onClick={handleToggle}
+      onKeyDown={e => {
+        if (e.key === ' ' || e.key === 'Enter') {
+          e.preventDefault();
+          handleToggle();
+        }
+      }}
+      className={`flex cursor-pointer select-none items-start gap-4 py-4 transition-opacity duration-300 ${
+        task.isCompleted ? 'opacity-55' : ''
       }`}
     >
-      <div className="flex items-start gap-3">
-        {/* Interactive Checkbox Circle */}
-        <div
-          className={`w-6 h-6 rounded-lg mt-0.5 flex items-center justify-center transition-all ${
-            task.isCompleted
-              ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30'
-              : 'border-2 border-slate-700 bg-slate-800/80 group-hover:border-slate-500'
+      <CheckRing done={task.isCompleted} />
+
+      <div className="min-w-0 flex-1">
+        <h4
+          className={`text-base font-bold leading-snug ${
+            task.isCompleted ? 'line-through decoration-bruma/60 decoration-1' : ''
           }`}
         >
-          {task.isCompleted && <Check className="w-4 h-4 stroke-[3]" />}
-        </div>
+          {task.title}
+        </h4>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap mb-1">
-            {/* Category tag */}
-            <span
-              className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md ${cfg.badgeBg}`}
-            >
-              <Icon className="w-3 h-3" />
-              <span>{cfg.label}</span>
-            </span>
+        {task.description && (
+          <p className="mt-0.5 line-clamp-2 text-[14px] leading-relaxed text-bruma">{task.description}</p>
+        )}
 
-            {/* High Priority Multiplier Tag */}
-            {task.isHighPriority && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30 animate-pulse">
-                <Flame className="w-3 h-3 fill-amber-400" />
-                <span>Alta Prioridad · x2</span>
-              </span>
-            )}
-          </div>
-
-          <h4
-            className={`text-sm font-semibold leading-snug tracking-tight transition-colors ${
-              task.isCompleted ? 'text-slate-500 line-through' : 'text-white'
-            }`}
-          >
-            {task.title}
-          </h4>
-
-          {task.description && (
-            <p className="text-xs text-slate-400 mt-0.5 line-clamp-2 leading-relaxed">
-              {task.description}
-            </p>
-          )}
-        </div>
-
-        {/* Reward Pill */}
-        <div className="text-right shrink-0">
-          <span
-            className={`inline-flex items-center gap-0.5 text-xs font-bold font-mono px-2 py-1 rounded-lg ${
-              isBoosted
-                ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-500/30'
-                : 'bg-slate-800 text-slate-300'
-            }`}
-          >
-            <span>+{rewardAmount}</span>
-            <span className="text-[10px] font-normal text-slate-400">pts</span>
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-bruma">
+          <span className="flex items-center gap-1.5">
+            <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
+            {cfg.label}
           </span>
+          {task.isHighPriority && <span className="font-bold text-curcuma-hondo">Alta prioridad x2</span>}
         </div>
+      </div>
+
+      <div className="shrink-0 text-right leading-tight">
+        <span className={`tnum text-[15px] font-bold ${isBoosted ? 'text-curcuma-hondo' : ''}`}>+{rewardAmount}</span>
+        <span className="block text-[11px] text-bruma">pts</span>
       </div>
     </div>
   );

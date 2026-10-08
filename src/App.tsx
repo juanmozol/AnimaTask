@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { CreatureState, Task, CameraMission, FamilyMoment, EnergyType, EvolutionBranch, EvolutionTier } from './types';
 import { INITIAL_TASKS, SAMPLE_FAMILY_MOMENTS, CREATURE_CATALOG, MAX_TIER, CreatureEvolutionInfo, getCatalogKey } from './data/initialData';
 import { BALANCE, GameClock, DayEndReport, addDays, clampBalance, computeDayEnd, dayKey, daysBetween, defaultClock, pathFromBalance, taskBalance } from './game/balance';
-import { PhoneFrame } from './components/PhoneFrame';
+import { AppShell } from './components/AppShell';
 import { CreatureDisplay } from './components/CreatureDisplay';
 import { EnergyBreakdown } from './components/EnergyBreakdown';
 import { BalanceMeter } from './components/BalanceMeter';
@@ -375,7 +375,7 @@ export default function App() {
   };
 
   return (
-    <PhoneFrame
+    <AppShell
       currentTab={currentTab}
       onTabChange={setCurrentTab}
       multiplierActive={multiplierActive}
@@ -386,7 +386,7 @@ export default function App() {
     >
       {/* TAB 1: CREATURE SANCTUARY */}
       {currentTab === 'creature' && (
-        <div className="space-y-4 animate-fade-in">
+        <div className="animate-fade-in">
           <CreatureDisplay
             creature={creature}
             canEvolve={canEvolve}
@@ -405,7 +405,7 @@ export default function App() {
 
       {/* TAB 2: TASKS & MISSIONS */}
       {currentTab === 'tasks' && (
-        <div className="animate-fade-in">
+        <div className="animate-fade-in px-5 pt-2">
           <TaskList
             tasks={tasks}
             multiplierActive={multiplierActive}
@@ -419,7 +419,7 @@ export default function App() {
 
       {/* TAB 3: CREATIVE CAMERA MISSIONS */}
       {currentTab === 'camera' && (
-        <div className="animate-fade-in">
+        <div className="animate-fade-in px-5 pt-2">
           <CameraMissionsView
             multiplierActive={multiplierActive}
             onSelectMission={mission => setActiveCameraMission(mission)}
@@ -429,7 +429,7 @@ export default function App() {
 
       {/* TAB 4: FAMILY RECONNECTION (PATERNIDAD PRESENTE) */}
       {currentTab === 'family' && (
-        <div className="animate-fade-in">
+        <div className="animate-fade-in px-5 pt-2">
           <FamilyReconnectionView
             creature={creature}
             moments={familyMoments}
@@ -476,20 +476,20 @@ export default function App() {
         <div
           role="status"
           onClick={() => setDayReport(null)}
-          className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] w-[calc(100%-2rem)] max-w-xs rounded-2xl border border-slate-700 bg-slate-900/95 backdrop-blur px-4 py-3 text-xs shadow-2xl animate-fade-in cursor-pointer"
+          className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] left-1/2 z-[60] w-[calc(100%-2.5rem)] max-w-[22rem] -translate-x-1/2 animate-fade-in cursor-pointer rounded-2xl bg-tinta px-5 py-3.5 text-lino shadow-[0_18px_40px_-16px_rgba(45,38,32,0.6)]"
         >
-          <p className="font-bold text-white">🌙 Fin del día</p>
+          <p className="text-[15px] font-bold">Fin del día</p>
           {dayReport.delta < 0 ? (
-            <p className="mt-1 text-slate-300">
-              Balance <span className="font-bold text-emerald-300">{dayReport.delta}</span>
-              {dayReport.missedTasks > 0 && ` · ${dayReport.missedTasks} tarea${dayReport.missedTasks > 1 ? 's' : ''} sin completar`}
-              {dayReport.noFamilyDays > 0 && ' · sin tiempo en familia'}
+            <p className="mt-0.5 text-[13px] leading-snug text-lino/80">
+              Balance {dayReport.delta}
+              {dayReport.missedTasks > 0 && `, ${dayReport.missedTasks} tarea${dayReport.missedTasks > 1 ? 's' : ''} sin completar`}
+              {dayReport.noFamilyDays > 0 && ', sin tiempo en familia'}
             </p>
           ) : (
-            <p className="mt-1 text-slate-300">Sin penalizaciones. ¡Buen día!</p>
+            <p className="mt-0.5 text-[13px] leading-snug text-lino/80">Sin penalizaciones. ¡Buen día!</p>
           )}
         </div>
       , document.body)}
-    </PhoneFrame>
+    </AppShell>
   );
 }
