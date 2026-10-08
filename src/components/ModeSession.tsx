@@ -95,7 +95,7 @@ export const ModeSession: React.FC<Props> = ({
       <div className="fixed inset-0 z-[70] animate-fade-in overflow-y-auto bg-arena select-none" role="dialog" aria-label="Modo completado">
         <div className="mx-auto flex min-h-full w-full max-w-[440px] flex-col px-6 pb-8 pt-12">
           <p className="text-[13px] text-bruma">{result.modeName}</p>
-          <h2 className="mt-1 text-[32px] font-bold leading-tight tracking-tight">Bloque completo</h2>
+          <h2 className="ui-title mt-1 text-[32px] leading-tight tracking-tight">Bloque completo</h2>
           <p className="mt-2 text-[15px] leading-relaxed text-bruma">
             {creatureName} recibió la energía de tu tiempo sin pantalla.
           </p>
@@ -116,7 +116,7 @@ export const ModeSession: React.FC<Props> = ({
               sound.playTap();
               onCloseResult();
             }}
-            className="mt-auto w-full rounded-full bg-jade py-3.5 text-[15px] font-bold text-lino transition-transform active:scale-[0.98]"
+            className="btn-sello mt-auto w-full py-3.5 text-[15px]"
           >
             Volver
           </button>
@@ -139,7 +139,7 @@ export const ModeSession: React.FC<Props> = ({
     >
       <div className="mx-auto flex min-h-full w-full max-w-[440px] flex-col px-6 pb-8 pt-10">
         <p className="text-[13px] text-bruma">{run.mode.name}</p>
-        <h2 className="mt-1 text-[26px] font-bold leading-tight tracking-tight">Teléfono en pausa</h2>
+        <h2 className="ui-title mt-1 text-[26px] leading-tight tracking-tight">Teléfono en pausa</h2>
 
         <div className="relative mx-auto my-8 h-60 w-60">
           <svg viewBox="0 0 120 120" className="h-full w-full" aria-hidden="true">
@@ -209,7 +209,7 @@ export const ModeSession: React.FC<Props> = ({
               <div className="mt-3 flex gap-3">
                 <button
                   onClick={() => setConfirming(false)}
-                  className="flex-1 rounded-full bg-jade py-2.5 text-[14px] font-bold text-lino"
+                  className="btn-sello flex-1 py-2.5 text-[14px]"
                 >
                   Seguir en pausa
                 </button>
@@ -218,7 +218,7 @@ export const ModeSession: React.FC<Props> = ({
                     doneRef.current = true;
                     onAbandon();
                   }}
-                  className="flex-1 rounded-full border border-tinta py-2.5 text-[14px] font-bold"
+                  className="btn-contorno flex-1 py-2.5 text-[14px]"
                 >
                   Salir
                 </button>

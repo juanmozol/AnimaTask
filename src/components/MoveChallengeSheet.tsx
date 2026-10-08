@@ -123,7 +123,7 @@ export const MoveChallengeSheet: React.FC<Props> = ({ task, barrier, onDone, onC
         )}
         <button
           onClick={start}
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-jade py-3.5 text-[15px] font-bold text-lino transition-transform active:scale-[0.98]"
+          className="btn-sello mt-5 w-full py-3.5 text-[15px]"
         >
           <Activity className="h-[18px] w-[18px]" />
           {fail ? 'Reintentar' : 'Permitir movimiento y empezar'}
@@ -144,12 +144,12 @@ export const MoveChallengeSheet: React.FC<Props> = ({ task, barrier, onDone, onC
           vuelve a intentarlo.
         </p>
         <div className="mt-5 flex gap-3">
-          <button onClick={onClose} className="flex-1 rounded-full border border-tinta py-3 text-[14px] font-bold">
+          <button onClick={onClose} className="btn-contorno flex-1 py-3 text-[14px]">
             Cerrar
           </button>
           <button
             onClick={() => setPhase('intro')}
-            className="flex-1 rounded-full bg-jade py-3 text-[14px] font-bold text-lino"
+            className="btn-sello flex-1 py-3 text-[14px]"
           >
             Reintentar
           </button>
@@ -166,7 +166,7 @@ export const MoveChallengeSheet: React.FC<Props> = ({ task, barrier, onDone, onC
         <p className="mt-1 text-[15px] text-bruma">{spec.name.toLowerCase()} contados por el sensor.</p>
         <button
           onClick={() => onDone({ at: new Date().toISOString() })}
-          className="mt-6 w-full rounded-full bg-jade py-3.5 text-[15px] font-bold text-lino transition-transform active:scale-[0.98]"
+          className="btn-sello mt-6 w-full py-3.5 text-[15px]"
         >
           Cumplir la tarea
         </button>

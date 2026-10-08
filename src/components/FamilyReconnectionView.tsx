@@ -12,7 +12,7 @@ export const FamilyReconnectionView: React.FC<Props> = ({ creature, moments, onO
   return (
     <div className="space-y-9 pb-4">
       <div>
-        <h2 className="text-[28px] font-bold leading-tight tracking-tight">Paternidad presente</h2>
+        <h2 className="ui-title text-[28px] leading-tight tracking-tight">Paternidad presente</h2>
         <p className="mt-2 text-[15px] leading-relaxed text-bruma">
           La tecnología no debe aislar a tu familia. AnimaTask bloquea el avance evolutivo solitario para
           forzar recuerdos significativos, abrazos y conversaciones entre padres e hijos.
@@ -23,7 +23,7 @@ export const FamilyReconnectionView: React.FC<Props> = ({ creature, moments, onO
             sound.playTap();
             onOpenRegisterModal();
           }}
-          className="mt-5 rounded-full bg-jade px-6 py-3 text-[15px] font-bold text-lino transition-transform active:scale-[0.98]"
+          className="btn-sello mt-5 px-6 py-3 text-[15px]"
         >
           Registrar momento de calidad
         </button>

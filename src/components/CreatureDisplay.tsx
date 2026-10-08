@@ -55,6 +55,14 @@ export const CreatureDisplay: React.FC<Props> = ({
   const [hearts, setHearts] = useState<Array<{ id: number; x: number; y: number }>>([]);
   const [showSpeciesModal, setShowSpeciesModal] = useState(false);
   const [imageError, setImageError] = useState(false);
+  // The "tap to interact" hint is only needed until the first pet.
+  const [petted, setPetted] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('animatask_petted') === '1';
+    } catch {
+      return false;
+    }
+  });
 
   // Determine lookup key
   const catalogKey = getCatalogKey(creature.speciesId, creature.tier, creature.branch, creature.alignment);
@@ -71,6 +79,14 @@ export const CreatureDisplay: React.FC<Props> = ({
 
   const handleInteraction = (e: React.MouseEvent) => {
     sound.playPetCreature();
+    if (!petted) {
+      setPetted(true);
+      try {
+        localStorage.setItem('animatask_petted', '1');
+      } catch {
+        /* storage unavailable: the hint comes back next time */
+      }
+    }
     setIsPetting(true);
     setTimeout(() => setIsPetting(false), 500);
 
@@ -120,21 +136,23 @@ export const CreatureDisplay: React.FC<Props> = ({
 
       <div
         onClick={handleInteraction}
-        className="relative aspect-[4/3] w-full cursor-pointer overflow-hidden bg-piedra/40 [clip-path:url(#duna)]"
+        className="ui-creature relative aspect-[4/3] w-full cursor-pointer overflow-hidden bg-piedra/40 [clip-path:url(#duna)]"
         role="button"
         aria-label={`Acariciar a ${creature.name}`}
       >
         {activeImage && !imageError ? (
-          <img
-            src={activeImage}
-            alt={info.name}
-            referrerPolicy="no-referrer"
-            onError={() => setImageError(true)}
-            draggable={false}
-            className={`h-full w-full object-cover transition-transform duration-500 [filter:sepia(0.2)_saturate(0.94)] ${
-              isPetting ? 'scale-[1.035]' : 'animate-breathe'
-            }`}
-          />
+          <div className="ui-tear h-full w-full">
+            <img
+              src={activeImage}
+              alt={info.name}
+              referrerPolicy="no-referrer"
+              onError={() => setImageError(true)}
+              draggable={false}
+              className={`h-full w-full object-cover transition-transform duration-500 [filter:sepia(0.2)_saturate(0.94)] ${
+                isPetting ? 'scale-[1.035]' : 'animate-breathe'
+              }`}
+            />
+          </div>
         ) : creature.tier === 0 ? (
           <div className="grid h-full w-full place-items-center bg-[radial-gradient(ellipse_at_50%_42%,#f7f0e4,#e4d8c3)]">
             <Egg breathing={!isPetting} />
@@ -156,7 +174,7 @@ export const CreatureDisplay: React.FC<Props> = ({
         ))}
       </div>
 
-      <p className="px-5 pt-1 text-center text-xs text-bruma">Toca para interactuar con {creature.name}</p>
+      {!petted && <p className="px-5 pt-1 text-center text-xs text-bruma">Toca para interactuar con {creature.name}</p>}
 
       <div className="px-5 pt-5">
         {/* Where it is on the tree, and which species */}
@@ -192,7 +210,7 @@ export const CreatureDisplay: React.FC<Props> = ({
         <div className="mt-4 flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="text-[28px] font-bold leading-tight tracking-tight">{creature.name}</h2>
+              <h2 className="ui-title text-[28px] leading-tight tracking-tight">{creature.name}</h2>
             </div>
             <p className="text-[15px] text-bruma">{creature.title}</p>
           </div>
@@ -200,7 +218,7 @@ export const CreatureDisplay: React.FC<Props> = ({
           {creature.isEvolutionLocked ? (
             <button
               onClick={onOpenFamilyUnlock}
-              className="flex shrink-0 items-center gap-1.5 rounded-full border border-rubia px-4 py-2 text-[13px] font-bold text-rubia transition-colors hover:bg-rubia/10"
+              className="btn-contorno shrink-0 gap-1.5 border-rubia px-4 py-2 text-[13px] text-rubia hover:bg-rubia/10"
             >
               <Lock className="h-3.5 w-3.5" />
               <span>Bloqueo Familiar</span>
@@ -210,7 +228,7 @@ export const CreatureDisplay: React.FC<Props> = ({
           ) : canEvolve ? (
             <button
               onClick={onOpenEvolution}
-              className="shrink-0 rounded-full bg-jade px-5 py-2.5 text-sm font-bold text-lino shadow-[0_0_0_5px_rgba(37,110,105,0.14)] transition-transform active:scale-95"
+              className="btn-sello shrink-0 px-5 py-2.5 text-sm"
             >
               ¡Evolucionar!
             </button>
@@ -271,7 +289,7 @@ export const CreatureDisplay: React.FC<Props> = ({
           >
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="text-lg font-bold">Santuario Multicriatura</h3>
+                <h3 className="ui-title text-lg">Santuario Multicriatura</h3>
                 <p className="text-sm text-bruma">Selecciona tu compañero activo</p>
               </div>
               <button
@@ -304,9 +322,7 @@ export const CreatureDisplay: React.FC<Props> = ({
                           <span className="font-bold">{sp.name}</span>
                           {sp.hasBipolarPaths && <span className="text-xs text-bruma">Dos sendas: Armonía y Sombra</span>}
                           {!isAvailable && (
-                            <span className="rounded-full border border-piedra px-2 py-px text-[11px] font-medium text-bruma">
-                              Próximamente
-                            </span>
+                            <span className="text-xs italic text-bruma">próximamente</span>
                           )}
                         </div>
                         <p className="text-sm text-bruma">{sp.subtitle}</p>

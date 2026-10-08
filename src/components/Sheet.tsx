@@ -33,7 +33,7 @@ export const Sheet: React.FC<Props> = ({ title, subtitle, onClose, children }) =
       >
         <div className="flex items-start justify-between gap-3 px-5 pb-2 pt-5">
           <div className="min-w-0">
-            <h3 className="text-[19px] font-bold leading-tight">{title}</h3>
+            <h3 className="ui-title text-[19px] leading-tight">{title}</h3>
             {subtitle && <p className="mt-0.5 text-[13px] leading-snug text-bruma">{subtitle}</p>}
           </div>
           <button

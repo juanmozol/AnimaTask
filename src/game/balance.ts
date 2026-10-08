@@ -29,6 +29,11 @@ export const BALANCE = {
 
 export const clampBalance = (n: number): number => Math.max(BALANCE.min, Math.min(BALANCE.max, n));
 
+// Tasks the user creates carry this id prefix; the seed tasks (task-1..task-7) do not.
+// Only user tasks can be deleted.
+export const CUSTOM_TASK_PREFIX = 'custom-task-';
+export const isUserTask = (t: Pick<Task, 'id'>): boolean => t.id.startsWith(CUSTOM_TASK_PREFIX);
+
 export const pathFromBalance = (balance: number): CreatureAlignment => (balance >= 0 ? 'harmony' : 'shadow');
 
 export const taskBalance = (task: Pick<Task, 'isHighPriority'>): number =>

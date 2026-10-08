@@ -2,8 +2,9 @@ import { createPortal } from 'react-dom';
 import React, { useState, useEffect, useRef } from 'react';
 import { CreatureState, CreatureAlignment, Task, CameraMission, FamilyMoment, EnergyType, EvolutionBranch, EvolutionTier } from './types';
 import { INITIAL_TASKS, SAMPLE_FAMILY_MOMENTS, CREATURE_CATALOG, MAX_TIER, CreatureEvolutionInfo, getCatalogKey } from './data/initialData';
-import { BALANCE, GameClock, DayEndReport, addDays, clampBalance, computeDayEnd, dayKey, daysBetween, defaultClock, pathFromBalance, taskBalance } from './game/balance';
+import { BALANCE, CUSTOM_TASK_PREFIX, GameClock, DayEndReport, addDays, clampBalance, computeDayEnd, dayKey, daysBetween, defaultClock, isUserTask, pathFromBalance, taskBalance } from './game/balance';
 import { AppShell } from './components/AppShell';
+import { CorruptionLevel, PREVIEW_KEY, corruptionLevel, readPreview, writePreview } from './game/corruption';
 import { CreatureDisplay } from './components/CreatureDisplay';
 import { EnergyBreakdown } from './components/EnergyBreakdown';
 import { BalanceMeter } from './components/BalanceMeter';
@@ -365,10 +366,23 @@ export default function App() {
   const handleAddTask = (newTaskData: Omit<Task, 'id' | 'isCompleted'>) => {
     const newTask: Task = {
       ...newTaskData,
-      id: `custom-task-${Date.now()}`,
+      id: `${CUSTOM_TASK_PREFIX}${Date.now()}`,
       isCompleted: false,
     };
     setTasks(prev => [newTask, ...prev]);
+  };
+
+  // Delete a user-created task. The balance it already earned lives on the creature,
+  // not on the task, so removing the task keeps the past points and only stops it
+  // from counting forward. A pending daily/committed task simply leaves the list,
+  // so day-end no longer penalizes it. Seed tasks are never deletable (no button).
+  const handleDeleteTask = (task: Task) => {
+    if (!isUserTask(task)) return;
+    sound.playTap();
+    setTasks(prev => prev.filter(t => t.id !== task.id));
+    if (offlineRun?.taskId === task.id) setOfflineRun(null);
+    if (barrierTaskId === task.id) setBarrierTaskId(null);
+    if (abandonTaskId === task.id) setAbandonTaskId(null);
   };
 
   // Camera mission completion
@@ -465,6 +479,15 @@ export default function App() {
   // form is swapped for its twin on the other path.
   const demoPath: CreatureAlignment = creature.tier <= 1 ? pathFromBalance(creature.balance) : creature.alignment;
 
+  // How worn the interface looks: follows the habits and the creature, unless the demo forces a step.
+  const [corruptionPreview, setCorruptionPreview] = useState<CorruptionLevel | null>(readPreview);
+  const corruption = corruptionPreview ?? corruptionLevel(creature);
+  const handleSetCorruptionPreview = (level: CorruptionLevel | null) => {
+    sound.playTap();
+    writePreview(level);
+    setCorruptionPreview(level);
+  };
+
   const handleSetPath = (path: CreatureAlignment) => {
     sound.playTap();
     const balance = path === 'harmony' ? 60 : -60;
@@ -498,6 +521,7 @@ export default function App() {
       localStorage.removeItem('animatask_moments');
       localStorage.removeItem('animatask_game');
       localStorage.removeItem('animatask_offline_run');
+      localStorage.removeItem(PREVIEW_KEY);
     } catch {
       /* storage unavailable: nothing to clear */
     }
@@ -517,6 +541,9 @@ export default function App() {
       onSetPath={handleSetPath}
       onEvolveNow={handleEvolveNow}
       canEvolveNow={creature.tier < MAX_TIER}
+      corruption={corruption}
+      corruptionPreview={corruptionPreview}
+      onSetCorruptionPreview={handleSetCorruptionPreview}
     >
       {/* TAB 1: CREATURE SANCTUARY */}
       {currentTab === 'creature' && (
@@ -548,6 +575,7 @@ export default function App() {
             onToggleComplete={handleToggleTask}
             onAddTask={handleAddTask}
             onAbandon={task => setAbandonTaskId(task.id)}
+            onDelete={handleDeleteTask}
             onOpenPermissions={() => setShowPermissions(true)}
           />
         </div>

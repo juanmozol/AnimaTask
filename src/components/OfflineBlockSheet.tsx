@@ -92,12 +92,12 @@ export const OfflineBlockSheet: React.FC<Props> = ({ task, barrier, run, broken,
           empezar de nuevo.
         </p>
         <div className="mt-5 flex gap-3">
-          <button onClick={onClose} className="flex-1 rounded-full border border-tinta py-3 text-[14px] font-bold">
+          <button onClick={onClose} className="btn-contorno flex-1 py-3 text-[14px]">
             Cerrar
           </button>
           <button
             onClick={onRetry}
-            className="flex-1 rounded-full bg-jade py-3 text-[14px] font-bold text-lino transition-transform active:scale-[0.98]"
+            className="btn-sello flex-1 py-3 text-[14px]"
           >
             Reintentar
           </button>
@@ -124,7 +124,7 @@ export const OfflineBlockSheet: React.FC<Props> = ({ task, barrier, run, broken,
               sound.playTaskComplete(true);
               onComplete({ at: new Date().toISOString() });
             }}
-            className="mt-6 w-full rounded-full bg-jade py-3.5 text-[15px] font-bold text-lino transition-transform active:scale-[0.98]"
+            className="btn-sello mt-6 w-full py-3.5 text-[15px]"
           >
             Cumplir la tarea
           </button>
@@ -205,7 +205,7 @@ export const OfflineBlockSheet: React.FC<Props> = ({ task, barrier, run, broken,
           onStart();
         }}
         disabled={online}
-        className="mt-4 w-full rounded-full bg-jade py-3.5 text-[15px] font-bold text-lino transition-transform active:scale-[0.98] disabled:opacity-40"
+        className="btn-sello mt-4 w-full py-3.5 text-[15px] disabled:opacity-40"
       >
         Empezar bloque
       </button>

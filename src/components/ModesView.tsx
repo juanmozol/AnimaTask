@@ -30,7 +30,7 @@ export const ModesView: React.FC<Props> = ({ game, onStart }) => {
   return (
     <div className="space-y-9 pb-4">
       <div>
-        <h2 className="text-[28px] font-bold leading-tight tracking-tight">Modos</h2>
+        <h2 className="ui-title text-[28px] leading-tight tracking-tight">Modos</h2>
         <p className="mt-2 text-[15px] leading-relaxed text-bruma">
           Pon el teléfono en pausa y tu criatura crece mientras descansas de la pantalla.
         </p>
@@ -84,7 +84,7 @@ export const ModesView: React.FC<Props> = ({ game, onStart }) => {
                       sound.playTap();
                       onStart(m, o);
                     }}
-                    className="rounded-full border border-tinta px-4 py-2 text-[13px] font-bold transition-colors hover:bg-tinta hover:text-lino"
+                    className="btn-contorno px-4 py-2 text-[13px]"
                   >
                     {formatMinutes(o.minutes)} <span className="tnum font-medium opacity-70">+{o.energy}</span>
                   </button>

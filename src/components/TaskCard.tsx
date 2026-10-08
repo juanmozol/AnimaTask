@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Activity, MapPin, Plane } from 'lucide-react';
 import { Task, EnergyType, TaskBarrier } from '../types';
 import { BALANCE } from '../game/balance';
@@ -10,7 +10,18 @@ interface Props {
   multiplierActive: boolean;
   onToggleComplete: (task: Task) => void;
   onAbandon?: (task: Task) => void;
+  onDelete?: (task: Task) => void; // only passed for user-created tasks
 }
+
+// A small hand-drawn waste basket, in the app's line style (no icon library).
+const TrashMark: React.FC = () => (
+  <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M4 6 h12" />
+    <path d="M8 6 V4.5 h4 V6" />
+    <path d="M5.4 6 l0.8 9.5 h7.6 l0.8 -9.5" />
+    <path d="M8.4 9 v4 M11.6 9 v4" />
+  </svg>
+);
 
 const CATEGORY: Record<EnergyType, { label: string; dot: string }> = {
   enfoque: { label: 'Enfoque', dot: 'bg-anil' },
@@ -27,7 +38,7 @@ const BARRIER_ICON: Record<TaskBarrier['kind'], React.ComponentType<{ className?
 
 // An open circle that closes in one stroke when the task is done, like an enso.
 const CheckRing: React.FC<{ done: boolean }> = ({ done }) => (
-  <svg viewBox="0 0 28 28" className="mt-0.5 h-7 w-7 shrink-0" aria-hidden="true">
+  <svg viewBox="0 0 28 28" className="ui-ring mt-0.5 h-7 w-7 shrink-0" aria-hidden="true">
     <circle cx="14" cy="14" r="11" fill={done ? 'var(--color-jade)' : 'none'} fillOpacity={0.12} stroke="var(--color-piedra)" strokeWidth="1.5" />
     <circle
       cx="14"
@@ -55,7 +66,8 @@ const CheckRing: React.FC<{ done: boolean }> = ({ done }) => (
   </svg>
 );
 
-export const TaskCard: React.FC<Props> = ({ task, multiplierActive, onToggleComplete, onAbandon }) => {
+export const TaskCard: React.FC<Props> = ({ task, multiplierActive, onToggleComplete, onAbandon, onDelete }) => {
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const cfg = CATEGORY[task.category];
   const barrier = task.barrier ? describeBarrier(task.barrier) : null;
   const BarrierIcon = task.barrier ? BARRIER_ICON[task.barrier.kind] : null;
@@ -86,7 +98,7 @@ export const TaskCard: React.FC<Props> = ({ task, multiplierActive, onToggleComp
           handleToggle();
         }
       }}
-      className={`flex select-none items-start gap-4 py-4 transition-opacity duration-300 ${
+      className={`ui-row flex select-none items-start gap-4 py-4 transition-opacity duration-300 ${
         locked ? 'cursor-default' : 'cursor-pointer'
       } ${task.isCompleted ? 'opacity-55' : ''}`}
     >
@@ -149,11 +161,51 @@ export const TaskCard: React.FC<Props> = ({ task, multiplierActive, onToggleComp
             className="mt-2 h-14 w-14 rounded-xl object-cover ring-1 ring-trazo"
           />
         )}
+
+        {/* Delete confirmation, in the same row — never a blocking window.confirm */}
+        {confirmingDelete && onDelete && (
+          <div
+            className="mt-2.5 flex items-center gap-4 text-[13px]"
+            onClick={e => e.stopPropagation()}
+            onKeyDown={e => e.stopPropagation()}
+          >
+            <span className="font-bold text-tinta">¿Eliminar misión?</span>
+            <button
+              onClick={() => onDelete(task)}
+              className="font-bold text-rubia underline decoration-rubia/50 underline-offset-4"
+            >
+              Sí
+            </button>
+            <button
+              onClick={() => setConfirmingDelete(false)}
+              className="text-bruma underline decoration-trazo underline-offset-4 hover:text-tinta"
+            >
+              Cancelar
+            </button>
+          </div>
+        )}
       </div>
 
-      <div className="shrink-0 text-right leading-tight">
-        <span className={`tnum text-[15px] font-bold ${isBoosted ? 'text-curcuma-hondo' : ''}`}>+{rewardAmount}</span>
-        <span className="block text-[11px] text-bruma">pts</span>
+      <div className="flex shrink-0 flex-col items-end gap-2 leading-tight">
+        <div className="text-right">
+          <span className={`tnum text-[15px] font-bold ${isBoosted ? 'text-curcuma-hondo' : ''}`}>+{rewardAmount}</span>
+          <span className="block text-[11px] text-bruma">pts</span>
+        </div>
+        {onDelete && !confirmingDelete && (
+          <button
+            aria-label="Eliminar misión"
+            title="Eliminar misión"
+            onClick={e => {
+              e.stopPropagation();
+              sound.playTap();
+              setConfirmingDelete(true);
+            }}
+            onKeyDown={e => e.stopPropagation()}
+            className="-mb-0.5 -mr-1 rounded-md p-1 text-bruma/55 transition-colors hover:text-rubia"
+          >
+            <TrashMark />
+          </button>
+        )}
       </div>
     </div>
   );

@@ -55,7 +55,7 @@ export const FamilyReconnectionModal: React.FC<Props> = ({ isLocked, onSaveMomen
       >
         <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
           <div>
-            <h3 className="text-[19px] font-bold leading-tight">Paternidad presente</h3>
+            <h3 className="ui-title text-[19px] leading-tight">Paternidad presente</h3>
             <p className="text-[13px] text-bruma">Misión de valoración de momentos</p>
           </div>
 
@@ -148,9 +148,7 @@ export const FamilyReconnectionModal: React.FC<Props> = ({ isLocked, onSaveMomen
                     sound.playTap();
                     setEmotion(em);
                   }}
-                  className={`rounded-full px-3.5 py-1.5 text-[13px] transition-colors ${
-                    emotion === em ? 'bg-tinta font-bold text-lino' : 'text-bruma ring-1 ring-trazo hover:text-tinta'
-                  }`}
+                  className="chip"
                 >
                   {em}
                 </button>
@@ -161,7 +159,7 @@ export const FamilyReconnectionModal: React.FC<Props> = ({ isLocked, onSaveMomen
           <button
             type="submit"
             disabled={isSubmitted}
-            className="w-full rounded-full bg-jade py-3.5 text-[15px] font-bold text-lino transition-transform active:scale-[0.98]"
+            className="btn-sello w-full py-3.5 text-[15px]"
           >
             {isSubmitted
               ? '¡Momento validado y desbloqueado!'

@@ -3,8 +3,8 @@ import { Task, EnergyType } from '../types';
 import { TaskCard } from './TaskCard';
 import { BarrierPicker } from './BarrierPicker';
 import { BarrierDraft, EMPTY_DRAFT, draftToBarrier } from '../game/barriers';
+import { isUserTask } from '../game/balance';
 import { sound } from '../services/sound';
-import { Plus, ShieldCheck, X } from 'lucide-react';
 
 interface Props {
   tasks: Task[];
@@ -14,6 +14,7 @@ interface Props {
   onToggleComplete: (task: Task) => void;
   onAddTask: (newTask: Omit<Task, 'id' | 'isCompleted'>) => void;
   onAbandon: (task: Task) => void;
+  onDelete: (task: Task) => void;
   onOpenPermissions: () => void;
 }
 
@@ -24,6 +25,9 @@ const FILTERS: Array<{ id: 'all' | EnergyType; label: string }> = [
   { id: 'creativo', label: 'Creativo' },
   { id: 'activo', label: 'Activo' },
 ];
+
+// The brush stroke shared with the creature's progress line.
+const BRUSH = 'M4 8 C 60 4, 110 11, 170 7 S 290 4, 396 8';
 
 const field =
   'w-full border-0 border-b border-piedra bg-transparent px-0 py-2 text-[15px] placeholder:text-bruma/70 focus:border-jade focus:outline-none focus-visible:outline-none';
@@ -36,6 +40,7 @@ export const TaskList: React.FC<Props> = ({
   onToggleComplete,
   onAddTask,
   onAbandon,
+  onDelete,
   onOpenPermissions,
 }) => {
   const [filter, setFilter] = useState<'all' | EnergyType>('all');
@@ -83,42 +88,50 @@ export const TaskList: React.FC<Props> = ({
 
   return (
     <div className="space-y-7 pb-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-[28px] font-bold leading-tight tracking-tight">Hoy</h2>
-          <p className="text-[15px] text-bruma">{today}</p>
-          <p className="tnum mt-1 text-[13px] text-bruma">
-            <strong className="font-bold text-tinta">{doneCount}</strong> de {tasks.length} hechas
-          </p>
+      <div>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="ui-title text-[28px] leading-tight tracking-tight">Hoy</h2>
+            <p className="text-[15px] text-bruma">{today}</p>
+          </div>
+
           <button
             onClick={() => {
               sound.playTap();
-              onOpenPermissions();
+              setIsAddingTask(prev => !prev);
             }}
-            className="mt-2 flex items-center gap-1.5 text-[13px] text-bruma underline decoration-trazo underline-offset-4 hover:text-tinta"
+            className="btn-sello mt-1 shrink-0 px-4 py-2 text-[13px]"
+            title="Nueva tarea"
+            aria-label="Nueva tarea"
+            aria-expanded={isAddingTask}
           >
-            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-            Permisos del dispositivo
+            {isAddingTask ? 'Cerrar' : 'Nueva tarea'}
           </button>
         </div>
 
-        <button
-          onClick={() => {
-            sound.playTap();
-            setIsAddingTask(prev => !prev);
-          }}
-          className="mt-1 grid h-11 w-11 shrink-0 place-items-center rounded-full bg-jade text-lino transition-transform active:scale-90"
-          title="Nueva tarea"
-          aria-label="Nueva tarea"
-        >
-          {isAddingTask ? <X className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
-        </button>
+        {/* The day as one brush stroke: the same one that paints the creature's progress */}
+        <svg viewBox="0 0 400 14" className="mt-4 block w-full" aria-hidden="true">
+          <path d={BRUSH} pathLength={100} fill="none" stroke="var(--color-trazo)" strokeWidth={3} strokeLinecap="round" />
+          <path
+            d={BRUSH}
+            pathLength={100}
+            fill="none"
+            stroke="var(--color-jade)"
+            strokeWidth={6}
+            strokeLinecap="round"
+            strokeDasharray={`${tasks.length ? Math.max((doneCount / tasks.length) * 100, 0.01) : 0.01} 100`}
+            style={{ transition: 'stroke-dasharray 600ms ease-out' }}
+          />
+        </svg>
+        <p className="tnum mt-1.5 text-[13px] text-bruma">
+          <strong className="font-bold text-tinta">{doneCount}</strong> de {tasks.length} hechas
+        </p>
       </div>
 
-      {/* Multiplier */}
+      {/* Multiplier: a line in the page, not a card; it only colors itself while it is on */}
       <div
-        className={`flex items-center justify-between gap-4 rounded-2xl px-4 py-3.5 transition-colors duration-300 ${
-          multiplierActive ? 'bg-curcuma/15 ring-1 ring-curcuma/50' : 'ring-1 ring-trazo'
+        className={`flex items-center justify-between gap-4 border-y py-3.5 transition-colors duration-300 ${
+          multiplierActive ? '-mx-3 border-curcuma/50 bg-curcuma/10 px-3' : 'border-trazo/70'
         }`}
       >
         <div>
@@ -141,7 +154,7 @@ export const TaskList: React.FC<Props> = ({
               sound.playMultiplierActivated();
               onActivateMultiplier();
             }}
-            className="shrink-0 whitespace-nowrap rounded-full border border-tinta px-4 py-2 text-[13px] font-bold transition-colors hover:bg-tinta hover:text-lino"
+            className="btn-contorno shrink-0 whitespace-nowrap px-4 py-2 text-[13px]"
           >
             Activar x2
           </button>
@@ -152,7 +165,7 @@ export const TaskList: React.FC<Props> = ({
       {isAddingTask && (
         <form
           onSubmit={handleCreateTask}
-          className="animate-fade-in space-y-5 rounded-2xl bg-lino p-5 ring-1 ring-trazo"
+          className="animate-fade-in space-y-5 border-l-[3px] border-jade pl-4"
         >
           <div>
             <h4 className="text-[15px] font-bold">Nueva misión real</h4>
@@ -209,7 +222,7 @@ export const TaskList: React.FC<Props> = ({
               type="checkbox"
               checked={newIsHighPriority}
               onChange={e => setNewIsHighPriority(e.target.checked)}
-              className="h-4 w-4 accent-jade"
+              className="check-sello"
             />
             <span className="text-[14px]">
               Alta prioridad <span className="text-bruma">(multiplicador x2)</span>
@@ -221,7 +234,7 @@ export const TaskList: React.FC<Props> = ({
           <button
             type="submit"
             disabled={barrier === 'incomplete'}
-            className="w-full rounded-full bg-jade py-3 text-[15px] font-bold text-lino transition-transform active:scale-[0.98] disabled:opacity-50"
+            className="btn-sello w-full py-3 text-[15px]"
           >
             Añadir tarea
           </button>
@@ -231,7 +244,22 @@ export const TaskList: React.FC<Props> = ({
         </form>
       )}
 
-      {/* Filters and tasks share one rule */}
+      {/* Nothing left to do: the whole list is empty */}
+      {tasks.length === 0 ? (
+        <div className="border-t border-trazo pt-10 text-center">
+          <p className="text-[15px] text-bruma">Aún no has creado misiones.</p>
+          <button
+            onClick={() => {
+              sound.playTap();
+              setIsAddingTask(true);
+            }}
+            className="btn-sello mt-5 px-5 py-2.5 text-[14px]"
+          >
+            Crear mi primera misión
+          </button>
+        </div>
+      ) : (
+      /* Filters and tasks share one rule */
       <div>
         <div className="no-scrollbar flex items-center gap-6 overflow-x-auto border-b border-trazo">
           {FILTERS.map(tab => {
@@ -264,10 +292,26 @@ export const TaskList: React.FC<Props> = ({
                 multiplierActive={multiplierActive}
                 onToggleComplete={onToggleComplete}
                 onAbandon={onAbandon}
+                onDelete={isUserTask(task) ? onDelete : undefined}
               />
             ))
           )}
         </div>
+      </div>
+      )}
+
+      {/* Setup, not part of the day: it lives at the end */}
+      <div>
+        <button
+          onClick={() => {
+            sound.playTap();
+            onOpenPermissions();
+          }}
+          className="btn-trazo text-[13px] font-medium"
+        >
+          Permisos del dispositivo
+        </button>
+        <p className="mt-1.5 text-[12px] leading-snug text-bruma">Ubicación, cámara y movimiento para las barreras.</p>
       </div>
     </div>
   );

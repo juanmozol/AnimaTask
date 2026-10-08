@@ -110,7 +110,7 @@ export const EvolutionModal: React.FC<Props> = ({
 
           <div className="flex flex-1 flex-col px-5 pb-8 pt-5">
             <p className="text-[13px] text-bruma">{currentCreature.name} evolucionó a</p>
-            <h2 className="mt-1 text-[32px] font-bold leading-tight tracking-tight">{nextCreatureInfo.name}</h2>
+            <h2 className="ui-title mt-1 text-[32px] leading-tight tracking-tight">{nextCreatureInfo.name}</h2>
             <p className="text-[15px] text-bruma">{nextCreatureInfo.title}</p>
             <p className="mt-2 flex items-center gap-1.5 text-[13px] text-bruma">
               <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: pathColor }} />
@@ -126,7 +126,7 @@ export const EvolutionModal: React.FC<Props> = ({
 
             <button
               onClick={handleFinish}
-              className="mt-auto w-full rounded-full bg-jade py-3.5 text-[15px] font-bold text-lino transition-transform active:scale-[0.98]"
+              className="btn-sello mt-auto w-full py-3.5 text-[15px]"
             >
               Abrazar nueva forma
             </button>

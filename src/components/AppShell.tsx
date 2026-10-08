@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { sound } from '../services/sound';
 import { CreatureAlignment } from '../types';
-import { Volume2, VolumeX, SlidersHorizontal, PawPrint, ListChecks, Timer, Camera, Users } from 'lucide-react';
+import { CORRUPTION_LEVELS, CORRUPTION_NAMES, CorruptionLevel } from '../game/corruption';
+import { Volume2, VolumeX } from 'lucide-react';
 
 type Tab = 'creature' | 'tasks' | 'modes' | 'camera' | 'family';
 
@@ -18,6 +19,9 @@ interface Props {
   onSetPath: (path: CreatureAlignment) => void;
   onEvolveNow: () => void;
   canEvolveNow: boolean;
+  corruption: CorruptionLevel; // how worn the interface is (0 = calm)
+  corruptionPreview: CorruptionLevel | null; // demo: a step chosen by hand, null = follow the habits
+  onSetCorruptionPreview: (level: CorruptionLevel | null) => void;
 }
 
 const PATHS: Array<{ id: CreatureAlignment; label: string; title: string; active: string }> = [
@@ -25,13 +29,33 @@ const PATHS: Array<{ id: CreatureAlignment; label: string; title: string; active
   { id: 'shadow', label: 'Sombra', title: 'Ver la versión mala (B2 a B4)', active: 'bg-humo text-lino' },
 ];
 
-const NAV_ITEMS: Array<{ id: Tab; label: string; icon: React.ComponentType<{ className?: string; strokeWidth?: number }> }> = [
-  { id: 'creature', label: 'Criatura', icon: PawPrint },
-  { id: 'tasks', label: 'Tareas', icon: ListChecks },
-  { id: 'modes', label: 'Modos', icon: Timer },
-  { id: 'camera', label: 'Cámara AR', icon: Camera },
-  { id: 'family', label: 'Familia', icon: Users },
+const NAV_ITEMS: Array<{ id: Tab; label: string }> = [
+  { id: 'creature', label: 'Criatura' },
+  { id: 'tasks', label: 'Tareas' },
+  { id: 'modes', label: 'Modos' },
+  { id: 'camera', label: 'Cámara AR' },
+  { id: 'family', label: 'Familia' },
 ];
+
+// The app's mark: a ring drawn in one stroke, and the turmeric dot that sits inside it.
+// When the interface wears down, the ring opens and the dot drifts out (see index.css).
+const Enso: React.FC = () => (
+  <svg viewBox="0 0 24 24" className="h-[22px] w-[22px] shrink-0" aria-hidden="true">
+    <circle
+      className="enso-ring"
+      cx="12"
+      cy="12"
+      r="9"
+      fill="none"
+      stroke="var(--color-jade)"
+      strokeWidth="2.6"
+      strokeLinecap="round"
+      pathLength={100}
+      transform="rotate(-115 12 12)"
+    />
+    <circle className="enso-dot" cx="12" cy="12" r="2.5" />
+  </svg>
+);
 
 export const AppShell: React.FC<Props> = ({
   currentTab,
@@ -46,6 +70,9 @@ export const AppShell: React.FC<Props> = ({
   onSetPath,
   onEvolveNow,
   canEvolveNow,
+  corruption,
+  corruptionPreview,
+  onSetCorruptionPreview,
 }) => {
   const [isMuted, setIsMuted] = useState<boolean>(sound.getMuted());
   const [demoOpen, setDemoOpen] = useState(false);
@@ -60,6 +87,11 @@ export const AppShell: React.FC<Props> = ({
     document.addEventListener('pointerdown', onPointerDown);
     return () => document.removeEventListener('pointerdown', onPointerDown);
   }, [demoOpen]);
+
+  // The whole document wears down together, including sheets and modals that live outside this tree.
+  useEffect(() => {
+    document.documentElement.dataset.corruption = String(corruption);
+  }, [corruption]);
 
   const toggleSound = () => {
     const newMuted = !isMuted;
@@ -77,7 +109,12 @@ export const AppShell: React.FC<Props> = ({
     <div className="min-h-dvh bg-arena text-tinta select-none">
       <div className="relative mx-auto flex min-h-dvh w-full max-w-[440px] flex-col md:border-x md:border-trazo/70">
         <header className="relative z-30 flex items-center justify-between px-5 pb-3 pt-5">
-          <span className="text-[19px] font-bold tracking-tight">AnimaTask</span>
+          <span className="ui-wordmark flex items-center gap-2 text-[19px] tracking-tight">
+            <Enso />
+            <span>
+              AnimaTas<span className="wm-k">k</span>
+            </span>
+          </span>
 
           <div className="flex items-center gap-0.5">
             {multiplierActive && (
@@ -96,15 +133,14 @@ export const AppShell: React.FC<Props> = ({
             <div ref={demoRef} className="relative">
               <button
                 onClick={() => setDemoOpen(prev => !prev)}
-                className="flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] font-medium text-bruma transition-colors hover:bg-tinta/5 hover:text-tinta"
+                className="flex h-9 items-center rounded-full px-3 text-[13px] font-medium text-bruma transition-colors hover:bg-tinta/5 hover:text-tinta"
                 aria-expanded={demoOpen}
               >
-                <SlidersHorizontal className="h-4 w-4" />
-                <span>Demo</span>
+                Demo
               </button>
 
               {demoOpen && (
-                <div className="absolute right-0 top-11 w-[19rem] animate-fade-in overflow-hidden rounded-2xl bg-lino text-sm shadow-[0_18px_40px_-18px_rgba(45,38,32,0.45)] ring-1 ring-trazo">
+                <div className="absolute right-0 top-11 w-[19rem] animate-fade-in overflow-hidden rounded-2xl bg-lino text-sm ring-1 ring-trazo">
                   <p className="px-4 pb-1 pt-3.5 text-[13px] leading-snug text-bruma">
                     Atajos para ver la app en acción sin esperar días.
                   </p>
@@ -127,6 +163,33 @@ export const AppShell: React.FC<Props> = ({
                     </div>
                     <p className="mt-1.5 text-[12px] leading-snug text-bruma">
                       Cambia la forma actual y decide la próxima evolución.
+                    </p>
+                  </div>
+                  <div className="border-t border-trazo/70 px-4 pb-3 pt-3">
+                    <p className="text-[13px] font-bold">Deterioro de la interfaz</p>
+                    <div role="group" aria-label="Deterioro de la interfaz" className="mt-1.5 flex flex-wrap gap-1.5">
+                      <button
+                        onClick={() => onSetCorruptionPreview(null)}
+                        aria-pressed={corruptionPreview === null}
+                        title="Sigue a los hábitos y a la forma de la criatura"
+                        className="chip"
+                      >
+                        Auto
+                      </button>
+                      {CORRUPTION_LEVELS.map(l => (
+                        <button
+                          key={l}
+                          onClick={() => onSetCorruptionPreview(l)}
+                          aria-pressed={corruptionPreview === l}
+                          title={CORRUPTION_NAMES[l]}
+                          className="chip tnum"
+                        >
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="mt-1.5 text-[12px] leading-snug text-bruma">
+                      {corruptionPreview === null ? 'Ahora' : 'Forzado'}: {CORRUPTION_NAMES[corruption].toLowerCase()}.
                     </p>
                   </div>
                   <ul className="divide-y divide-trazo/70 border-t border-trazo/70">
@@ -198,7 +261,6 @@ export const AppShell: React.FC<Props> = ({
         >
           {NAV_ITEMS.map(item => {
             const isActive = currentTab === item.id;
-            const Icon = item.icon;
             return (
               <button
                 key={item.id}
@@ -207,15 +269,24 @@ export const AppShell: React.FC<Props> = ({
                   onTabChange(item.id);
                 }}
                 aria-current={isActive ? 'page' : undefined}
-                className={`flex min-h-[54px] flex-col items-center justify-center gap-0.5 rounded-xl transition-colors ${
+                className={`flex min-h-[52px] flex-col items-center justify-center rounded-xl transition-colors ${
                   isActive ? 'text-tinta' : 'text-bruma hover:text-tinta'
                 }`}
               >
-                <Icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2 : 1.6} />
-                <span className={`text-[11px] ${isActive ? 'font-bold' : 'font-medium'}`}>{item.label}</span>
-                <span
-                  className={`h-1 w-1 rounded-full transition-colors ${isActive ? 'bg-jade' : 'bg-transparent'}`}
-                />
+                <span className={`nav-label text-[13px] ${isActive ? 'font-bold' : 'font-medium'}`}>{item.label}</span>
+                {/* The mark under the current section is painted once, in a single stroke */}
+                <svg viewBox="0 0 40 8" className="nav-mark mt-1 h-2 w-9" aria-hidden="true">
+                  {isActive && (
+                    <path
+                      d="M3 5 C 10 1.5, 22 6.6, 37 3"
+                      pathLength={100}
+                      fill="none"
+                      stroke="var(--color-jade)"
+                      strokeWidth="2.6"
+                      strokeLinecap="round"
+                    />
+                  )}
+                </svg>
               </button>
             );
           })}

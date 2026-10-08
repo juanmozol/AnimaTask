@@ -159,7 +159,7 @@ export const PermissionsSheet: React.FC<Props> = ({ onClose }) => {
                 <button
                   onClick={() => run(k)}
                   disabled={busy !== null}
-                  className="mt-2.5 rounded-full border border-tinta px-4 py-1.5 text-[13px] font-bold transition-colors hover:bg-tinta hover:text-lino disabled:opacity-50"
+                  className="btn-contorno mt-2.5 px-4 py-1.5 text-[13px]"
                 >
                   {s.state === 'denied' ? 'Reintentar' : TEXT[k].action}
                 </button>
@@ -186,7 +186,7 @@ export const PermissionsSheet: React.FC<Props> = ({ onClose }) => {
         <button
           onClick={runAll}
           disabled={busy !== null}
-          className="mt-5 w-full rounded-full bg-jade py-3.5 text-[15px] font-bold text-lino transition-transform active:scale-[0.98] disabled:opacity-50"
+          className="btn-sello mt-5 w-full py-3.5 text-[15px]"
         >
           {busy === 'all' ? 'Pidiendo permisos...' : 'Permitir todo'}
         </button>

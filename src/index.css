@@ -6,6 +6,7 @@
  */
 @theme {
   --font-sans: 'Zen Maru Gothic', ui-rounded, 'Hiragino Maru Gothic ProN', 'Nunito', system-ui, sans-serif;
+  --font-gotico: 'Grenze Gotisch Variable', 'Zen Maru Gothic', serif; /* solo cuando la interfaz se deteriora */
 
   --color-arena: #e9dfce; /* fondo de la página */
   --color-lino: #f4ede0; /* hojas, campos */
@@ -141,6 +142,505 @@
   }
   .tnum {
     font-variant-numeric: tabular-nums;
+  }
+}
+
+/*
+ * Tres voces para las acciones, en vez de una sola píldora para todo:
+ *   sello    = la acción principal de la pantalla (jade, esquinas cortadas a mano)
+ *   contorno = la alternativa (misma forma, solo línea)
+ *   trazo    = acción discreta: texto con un subrayado de pincel
+ * y chip = una opción dentro de un grupo (esquina corta, se rellena al elegirla).
+ */
+@layer components {
+  .cut {
+    border-radius: 10px 14px 11px 15px / 14px 10px 15px 11px;
+  }
+  .ui-title,
+  .ui-wordmark {
+    font-weight: 700;
+  }
+  .btn-sello,
+  .btn-contorno {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    line-height: 1.25;
+    text-align: center;
+    border-radius: 10px 14px 11px 15px / 14px 10px 15px 11px;
+    transition:
+      transform 120ms ease,
+      filter 120ms ease,
+      background-color 150ms,
+      color 150ms;
+  }
+  .btn-sello {
+    background: var(--color-jade);
+    color: var(--color-lino);
+    padding: 0.8rem 1.4rem;
+  }
+  .btn-sello:active:not(:disabled) {
+    transform: translateY(1px) rotate(-0.4deg);
+    filter: brightness(0.93);
+  }
+  .btn-sello:disabled {
+    opacity: 0.5;
+  }
+  .btn-contorno {
+    border: 1.5px solid var(--color-tinta);
+    color: var(--color-tinta);
+    padding: 0.6rem 1.1rem;
+  }
+  .btn-contorno:hover:not(:disabled) {
+    background: var(--color-tinta);
+    color: var(--color-lino);
+  }
+  .btn-contorno:disabled {
+    opacity: 0.5;
+  }
+  .btn-trazo {
+    display: inline;
+    font-weight: 700;
+    padding-bottom: 3px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 6' preserveAspectRatio='none'%3E%3Cpath d='M1 3.6 C 20 1.4, 40 5.2, 62 3 S 90 2.2, 99 3.8' fill='none' stroke='%232d2620' stroke-width='1.7' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 100% 6px;
+  }
+  .btn-trazo:hover {
+    color: var(--color-jade);
+  }
+  .check-sello {
+    appearance: none;
+    flex: none;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    border: 1.5px solid var(--color-piedra);
+    border-radius: 7px 5px 8px 5px / 5px 8px 5px 7px;
+    background: transparent center / 14px no-repeat;
+    transition:
+      background-color 150ms,
+      border-color 150ms;
+  }
+  .check-sello:checked {
+    border-color: var(--color-jade);
+    background-color: var(--color-jade);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3 7.3 l2.8 2.8 L11 4.2' fill='none' stroke='%23f4ede0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+  .chip {
+    border: 1px solid var(--color-piedra);
+    border-radius: 10px;
+    padding: 0.4rem 0.85rem;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-bruma);
+    transition:
+      background-color 150ms,
+      color 150ms,
+      border-color 150ms;
+  }
+  .chip:hover:not(:disabled) {
+    color: var(--color-tinta);
+    border-color: var(--color-tinta);
+  }
+  .chip[aria-checked='true'],
+  .chip[aria-pressed='true'] {
+    background: var(--color-tinta);
+    border-color: var(--color-tinta);
+    color: var(--color-lino);
+  }
+}
+
+@keyframes stroke-in {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/*
+ * Deterioro de la interfaz (data-corruption en <html>, de 0 a 4). Es la misma app en cada paso:
+ * la paleta base no cambia; se desgastan los detalles. Qué decide el paso: src/game/corruption.ts.
+ *   1 detalles extraños: una letra caída, el punto del logo se corre, el trazo del menú se corta
+ *   2 deteriorada:       títulos con letra gótica fina, filas corridas, iconos torcidos
+ *   3 corrupta:          gótica firme, iconos y anillos rotos, la foto se parte, el fondo se apaga
+ *   4 maligna:           gótica densa, títulos que se desdoblan seguido, el punto sale del anillo
+ */
+/* La letra gótica entra de a poco: una "k" (1), el logo y la inicial de cada título (2), los títulos enteros (3 y 4) */
+:root:is([data-corruption='2'], [data-corruption='3'], [data-corruption='4']) .ui-wordmark,
+:root:is([data-corruption='3'], [data-corruption='4']) .ui-title {
+  font-family: var(--ui-gothic-font);
+  font-weight: var(--ui-gothic-wght);
+  font-size-adjust: var(--ui-gothic-adjust);
+  letter-spacing: var(--ui-gothic-track);
+}
+:root[data-corruption='2'] .ui-title::first-letter {
+  font-family: var(--ui-gothic-font);
+  font-weight: 620;
+  font-size-adjust: var(--ui-gothic-adjust);
+}
+:root[data-corruption='1'] .wm-k {
+  font-family: var(--font-gotico);
+  font-size-adjust: 0.5;
+}
+.nav-mark path {
+  stroke-dasharray: var(--ui-mark-dash, 100 100);
+  animation: stroke-in 380ms ease-out both;
+}
+.enso-ring {
+  stroke-dasharray: var(--ui-enso-dash, 93 7);
+}
+.enso-dot {
+  transform: translate(var(--ui-dot-x, 0), var(--ui-dot-y, 0));
+  fill: var(--ui-dot-fill, var(--color-curcuma));
+  transition: transform 900ms ease;
+}
+.wm-k {
+  display: inline-block;
+  transform: translateY(var(--ui-k-y, 0)) rotate(var(--ui-k-rot, 0deg));
+}
+
+:root[data-corruption='1'] {
+  --ui-dot-x: 1.3px;
+  --ui-dot-y: -1px;
+  --ui-k-y: 1.5px;
+  --ui-k-rot: 5deg;
+  --ui-mark-dash: 62 5 33;
+}
+:root[data-corruption='2'] {
+  --ui-gothic-font: var(--font-gotico);
+  --ui-gothic-wght: 480;
+  --ui-gothic-adjust: 0.5;
+  --ui-gothic-track: 0.01em;
+  --ui-dot-x: 2.4px;
+  --ui-dot-y: -2px;
+  --ui-dot-fill: var(--color-humo);
+  --ui-enso-dash: 80 20;
+  --ui-k-y: 2.5px;
+  --ui-k-rot: 9deg;
+  --ui-mark-dash: 40 8 30 6 16;
+}
+:root[data-corruption='3'] {
+  --ui-gothic-font: var(--font-gotico);
+  --ui-gothic-wght: 680;
+  --ui-gothic-adjust: 0.5;
+  --ui-gothic-track: 0.025em;
+  --ui-dot-x: 6px;
+  --ui-dot-y: -5px;
+  --ui-dot-fill: var(--color-humo);
+  --ui-enso-dash: 60 40;
+  --ui-k-y: 3.5px;
+  --ui-k-rot: 16deg;
+  --ui-mark-dash: 28 10 16 10 18 10;
+  /* el suelo se apaga de verdad: ceniciento y más frío */
+  --color-arena: #cdbfa8;
+  --color-lino: #d7cbb3;
+  --color-trazo: #ab9d81;
+  --color-piedra: #978868;
+  --color-bruma: #463b2d;
+  --color-humo: #38353f;
+}
+:root[data-corruption='4'] {
+  --ui-gothic-font: var(--font-gotico);
+  --ui-gothic-wght: 900;
+  --ui-gothic-adjust: 0.5;
+  --ui-gothic-track: 0.05em;
+  --ui-dot-x: 13px;
+  --ui-dot-y: -10px;
+  --ui-dot-fill: var(--color-humo);
+  --ui-enso-dash: 40 60;
+  --ui-k-y: 5px;
+  --ui-k-rot: 30deg;
+  --ui-mark-dash: 12 16 8 22 8 18;
+  /* MALIGNA: el suelo se hunde a un gris ceniza. tinta y jade no se tocan, así el texto del
+     centro sigue por encima de 4.5:1; la viñeta pesada apaga los bordes casi a negro. */
+  --color-arena: #a89a80;
+  --color-lino: #b4a78d;
+  --color-trazo: #6d6350;
+  --color-piedra: #5a5040;
+  --color-bruma: #241d16;
+  --color-curcuma-hondo: #6b4f16;
+  --color-humo: #241f2b;
+}
+
+/* La criatura cambia de color según se corrompe: el tratamiento se endurece y, al final, late.
+   Es imagen, no texto: aquí el color puede irse lejos sin tocar la legibilidad. */
+:root[data-corruption='3'] .ui-creature {
+  filter: contrast(1.15) saturate(1.35) hue-rotate(-20deg);
+}
+:root[data-corruption='4'] .ui-creature {
+  filter: contrast(1.4) saturate(1.8) hue-rotate(-45deg) brightness(0.88);
+}
+
+/* Filas y menú: del orden a lo ligeramente fuera de lugar, luego a lo claramente roto */
+:root:is([data-corruption='2'], [data-corruption='3'], [data-corruption='4']) .ui-row:nth-child(even) {
+  transform: translateX(1.5px);
+}
+:root:is([data-corruption='3'], [data-corruption='4']) .ui-row:nth-child(3n) {
+  transform: translateX(-2px) rotate(0.12deg);
+}
+:root[data-corruption='3'] .ui-row:nth-child(even) {
+  transform: translateX(3px);
+}
+:root[data-corruption='4'] .ui-row:nth-child(even) {
+  transform: translateX(6px) rotate(-0.25deg);
+}
+:root[data-corruption='4'] .ui-row:nth-child(3n) {
+  transform: translateX(-7px) skewX(-1.5deg);
+}
+:root[data-corruption='4'] .ui-row:nth-child(5n) {
+  transform: translateX(4px) rotate(0.4deg);
+}
+:root:is([data-corruption='3'], [data-corruption='4']) .nav-label {
+  letter-spacing: 0.03em;
+}
+:root[data-corruption='4'] .nav-label {
+  letter-spacing: 0.06em;
+}
+:root[data-corruption='4'] .nav-label:nth-child(odd) {
+  transform: translateY(2px) rotate(-1deg);
+}
+
+/* Iconos: torcidos, luego partidos */
+:root[data-corruption='2'] svg.lucide {
+  transform: rotate(-4deg);
+}
+:root[data-corruption='3'] svg.lucide {
+  transform: rotate(-7deg);
+  stroke-dasharray: 5 1.6;
+}
+:root[data-corruption='4'] svg.lucide {
+  transform: rotate(-11deg) skewX(12deg);
+  stroke-dasharray: 3 2.6;
+  filter: drop-shadow(1.5px 0 0 rgb(168 86 76 / 0.6)) drop-shadow(-1.5px 0 0 rgb(63 94 140 / 0.6));
+}
+:root[data-corruption='3'] .ui-ring circle:first-child {
+  stroke-dasharray: 34 4 14 6 9 5;
+}
+:root[data-corruption='4'] .ui-ring circle:first-child {
+  stroke-dasharray: 20 5 8 7 6 4 10 5;
+}
+
+/* Botones que reaccionan raro */
+:root:is([data-corruption='2'], [data-corruption='3'], [data-corruption='4']) .btn-sello:active:not(:disabled) {
+  animation: k-kick 180ms steps(3) 1;
+}
+:root[data-corruption='3'] .btn-sello:hover:not(:disabled) {
+  transform: translate(2px, -1px);
+}
+/* al final el botón se escapa del cursor y parpadea en RGB */
+:root[data-corruption='4'] .btn-sello:hover:not(:disabled) {
+  transform: translate(-5px, 3px) rotate(-1.2deg);
+  filter: brightness(1.1);
+}
+:root[data-corruption='4'] .btn-sello {
+  letter-spacing: 0.06em;
+  text-shadow: 2px 0 rgb(168 86 76 / 0.7), -2px 0 rgb(63 94 140 / 0.6);
+}
+:root[data-corruption='4'] .btn-contorno {
+  border-style: dashed;
+}
+
+/* El fondo se apaga a los lados: suave al principio, casi negro al final */
+:root:is([data-corruption='3'], [data-corruption='4']) body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  box-shadow: inset 0 0 130px 10px rgb(28 22 16 / var(--ui-vignette, 0.12));
+}
+:root[data-corruption='4'] body::after {
+  box-shadow: inset 0 0 210px 40px rgb(16 12 9 / 0.62);
+}
+
+/* Líneas de barrido, como un tubo estropeado. En L4 una banda de color recorre la pantalla. */
+:root:is([data-corruption='3'], [data-corruption='4']) body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  background: repeating-linear-gradient(0deg, rgb(20 15 10 / 0.1) 0 1px, transparent 1px 3px);
+}
+:root[data-corruption='4'] body::before {
+  background:
+    repeating-linear-gradient(0deg, rgb(16 12 9 / 0.2) 0 1px, transparent 1px 3px),
+    linear-gradient(
+      0deg,
+      transparent 0 46%,
+      rgb(133 80 111 / 0.22) 47%,
+      rgb(63 94 140 / 0.22) 50%,
+      transparent 54% 100%
+    );
+  background-size:
+    100% 100%,
+    100% 100%;
+  background-position:
+    0 0,
+    0 -45%;
+}
+
+:root[data-corruption='3'] {
+  --ui-vignette: 0.26;
+}
+:root[data-corruption='4'] {
+  --ui-title-shadow: 2px 0 rgb(168 86 76 / 0.55), -2px 0 rgb(63 94 140 / 0.45);
+}
+:root:is([data-corruption='3'], [data-corruption='4']) .ui-title {
+  text-shadow: var(--ui-title-shadow, 1px 0 rgb(168 86 76 / 0.35));
+}
+
+/* Las líneas que separan se cortan */
+:root[data-corruption='3'] :is(.divide-y > :not(:last-child), .border-y, .border-t, .border-b) {
+  border-top-style: dotted;
+  border-bottom-style: dotted;
+}
+:root[data-corruption='4'] :is(.divide-y > :not(:last-child)) {
+  border-top-style: dashed;
+  border-bottom-style: dashed;
+}
+
+@keyframes k-blip {
+  0%,
+  93%,
+  100% {
+    transform: translateY(var(--ui-k-y, 0)) rotate(var(--ui-k-rot, 0deg));
+  }
+  94% {
+    transform: translate(2px, calc(var(--ui-k-y, 0) - 2px)) rotate(calc(var(--ui-k-rot, 0deg) + 14deg));
+  }
+  96% {
+    transform: translate(-1px, calc(var(--ui-k-y, 0) + 1px)) rotate(calc(var(--ui-k-rot, 0deg) - 10deg));
+  }
+}
+@keyframes k-split {
+  0%,
+  92%,
+  100% {
+    text-shadow: var(--ui-title-shadow, none);
+    transform: none;
+  }
+  93% {
+    text-shadow:
+      -2px 0 var(--color-anil),
+      2px 0 var(--color-rubia);
+    transform: translateX(1px);
+  }
+  95% {
+    text-shadow:
+      2px 0 var(--color-anil),
+      -2px 0 var(--color-rubia);
+    transform: translateX(-2px) skewX(-5deg);
+  }
+  97% {
+    text-shadow: -1px 0 var(--color-rubia);
+    transform: translateX(1px);
+  }
+}
+@keyframes k-tear {
+  0%,
+  57%,
+  65%,
+  100% {
+    transform: none;
+    filter: none;
+  }
+  59% {
+    transform: translateX(5px) scaleY(1.012);
+    filter: drop-shadow(-3px 0 0 rgb(168 86 76 / 0.55)) drop-shadow(3px 0 0 rgb(63 94 140 / 0.55));
+  }
+  62% {
+    transform: translateX(-4px);
+    filter: drop-shadow(3px 0 0 rgb(168 86 76 / 0.5)) drop-shadow(-3px 0 0 rgb(63 94 140 / 0.5));
+  }
+}
+@keyframes k-kick {
+  33% {
+    transform: translate(-2px, 1px) skewX(-4deg);
+  }
+  66% {
+    transform: translate(2px, -1px) skewX(4deg);
+  }
+}
+/* El color de la criatura: deriva lenta en L3, y en L4 late, se desatura y parpadea en negativo */
+@keyframes k-img-drift {
+  0%,
+  100% {
+    filter: contrast(1.15) saturate(1.35) hue-rotate(-20deg);
+  }
+  50% {
+    filter: contrast(1.22) saturate(1.55) hue-rotate(-40deg);
+  }
+}
+@keyframes k-corrupt-img {
+  0%,
+  100% {
+    filter: contrast(1.4) saturate(1.8) hue-rotate(-45deg) brightness(0.88);
+  }
+  16% {
+    filter: contrast(1.6) saturate(2.2) hue-rotate(70deg) brightness(0.9);
+  }
+  33% {
+    filter: contrast(1.5) saturate(0.2) hue-rotate(-130deg) brightness(0.75);
+  }
+  47% {
+    filter: invert(1) hue-rotate(180deg) saturate(2) contrast(1.5);
+  }
+  49% {
+    filter: contrast(1.4) saturate(1.8) hue-rotate(-45deg);
+  }
+  72% {
+    filter: contrast(1.7) saturate(2.4) hue-rotate(155deg) brightness(0.95);
+  }
+}
+/* La banda de color que baja por la pantalla rota */
+@keyframes k-scanshift {
+  0% {
+    background-position:
+      0 0,
+      0 -45%;
+  }
+  100% {
+    background-position:
+      0 0,
+      0 145%;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root:is([data-corruption='1'], [data-corruption='2'], [data-corruption='3'], [data-corruption='4']) .wm-k {
+    animation: k-blip 19s linear infinite;
+  }
+  :root[data-corruption='3'] .ui-title {
+    animation: k-split 11s linear infinite;
+  }
+  :root[data-corruption='4'] .ui-title {
+    animation: k-split 4.5s linear infinite;
+  }
+  :root[data-corruption='4'] .ui-wordmark {
+    animation: k-split 6.1s linear infinite;
+  }
+  :root[data-corruption='3'] .ui-tear {
+    animation: k-tear 13s linear infinite;
+  }
+  :root[data-corruption='4'] .ui-tear {
+    animation: k-tear 5s linear infinite;
+  }
+  :root[data-corruption='3'] .ui-creature {
+    animation: k-img-drift 10s ease-in-out infinite;
+  }
+  :root[data-corruption='4'] .ui-creature {
+    animation: k-corrupt-img 3.4s steps(1, end) infinite;
+  }
+  :root[data-corruption='4'] body::before {
+    animation: k-scanshift 4.6s linear infinite;
   }
 }
 

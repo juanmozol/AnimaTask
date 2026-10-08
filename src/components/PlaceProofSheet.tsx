@@ -224,7 +224,7 @@ export const PlaceProofSheet: React.FC<Props> = ({ task, barrier, onDone, onClos
             sound.playTap();
             setPhase('live');
           }}
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-jade py-3.5 text-[15px] font-bold text-lino transition-transform active:scale-[0.98]"
+          className="btn-sello mt-5 w-full py-3.5 text-[15px]"
         >
           <Camera className="h-[18px] w-[18px]" />
           Permitir y abrir la cámara
@@ -248,13 +248,13 @@ export const PlaceProofSheet: React.FC<Props> = ({ task, barrier, onDone, onClos
               setShot(null);
               setPhase('live');
             }}
-            className="flex-1 rounded-full border border-tinta py-3 text-[14px] font-bold"
+            className="btn-contorno flex-1 py-3 text-[14px]"
           >
             Repetir
           </button>
           <button
             onClick={use}
-            className="flex-1 rounded-full bg-jade py-3 text-[14px] font-bold text-lino transition-transform active:scale-[0.98]"
+            className="btn-sello flex-1 py-3 text-[14px]"
           >
             Usar foto
           </button>
@@ -276,7 +276,7 @@ export const PlaceProofSheet: React.FC<Props> = ({ task, barrier, onDone, onClos
                 <p className="mt-1">{permissionHelp('camera', info)}</p>
                 <button
                   onClick={() => setCamTry(n => n + 1)}
-                  className="mt-3 rounded-full border border-lino/60 px-4 py-1.5 text-[13px] font-bold text-lino"
+                  className="cut mt-3 border border-lino/60 px-4 py-1.5 text-[13px] font-bold text-lino"
                 >
                   Reintentar
                 </button>
@@ -306,8 +306,8 @@ export const PlaceProofSheet: React.FC<Props> = ({ task, barrier, onDone, onClos
 
       {fileMode ? (
         <label
-          className={`mt-4 flex w-full items-center justify-center gap-2 rounded-full py-3.5 text-[15px] font-bold text-lino ${
-            inside ? 'cursor-pointer bg-jade' : 'cursor-not-allowed bg-tinta opacity-40'
+          className={`btn-sello mt-4 w-full py-3.5 text-[15px] ${
+            inside ? 'cursor-pointer' : 'cursor-not-allowed bg-tinta opacity-40'
           }`}
         >
           <Camera className="h-[18px] w-[18px]" />
@@ -326,7 +326,7 @@ export const PlaceProofSheet: React.FC<Props> = ({ task, barrier, onDone, onClos
         <button
           onClick={capture}
           disabled={!inside || !camReady}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-tinta py-3.5 text-[15px] font-bold text-lino transition-transform active:scale-[0.98] disabled:opacity-40"
+          className="btn-sello mt-4 w-full bg-tinta py-3.5 text-[15px] disabled:opacity-40"
         >
           <Camera className="h-[18px] w-[18px]" />
           Tomar foto

@@ -26,9 +26,7 @@ const field =
   'w-full border-0 border-b border-piedra bg-transparent px-0 py-2 text-[15px] placeholder:text-bruma/70 focus:border-jade focus:outline-none focus-visible:outline-none';
 
 const pill = (on: boolean) =>
-  `rounded-full border px-3.5 py-1.5 text-[13px] font-bold transition-colors ${
-    on ? 'border-tinta bg-tinta text-lino' : 'border-piedra text-bruma hover:border-tinta hover:text-tinta'
-  }`;
+  `chip ${on ? 'border-tinta bg-tinta text-lino' : ''}`;
 
 const COPY: Record<Exclude<BarrierDraft['kind'], 'none'>, string> = {
   place: 'Para cumplirla tomas una foto en vivo dentro del radio. La galería no sirve.',
@@ -124,7 +122,7 @@ export const BarrierPicker: React.FC<Props> = ({ value, onChange }) => {
                   type="button"
                   onClick={anchorHere}
                   disabled={anchoring}
-                  className="rounded-full border border-tinta px-4 py-2 text-[13px] font-bold transition-colors hover:bg-tinta hover:text-lino disabled:opacity-50"
+                  className="btn-contorno px-4 py-2 text-[13px]"
                 >
                   {anchoring ? 'Buscando señal...' : value.anchor ? 'Volver a anclar aquí' : 'Anclar aquí'}
                 </button>

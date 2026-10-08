@@ -12,7 +12,7 @@ export const CameraMissionsView: React.FC<Props> = ({ multiplierActive, onSelect
   return (
     <div className="space-y-9 pb-4">
       <div>
-        <h2 className="text-[28px] font-bold leading-tight tracking-tight">Misiones de visión creativa</h2>
+        <h2 className="ui-title text-[28px] leading-tight tracking-tight">Misiones de visión creativa</h2>
         <p className="mt-2 text-[15px] leading-relaxed text-bruma">
           Conecta tu entorno físico con tu criatura. Escanea colores, texturas y objetos de estudio para
           desbloquear ráfagas de energía creativa.

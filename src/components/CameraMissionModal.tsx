@@ -143,7 +143,7 @@ export const CameraMissionModal: React.FC<Props> = ({
               style={{ backgroundColor: mission.targetColor }}
             />
             <div>
-              <h3 className="text-[17px] font-bold leading-tight">Misión de cámara creativa</h3>
+              <h3 className="ui-title text-[17px] leading-tight">Misión de cámara creativa</h3>
               <p className="text-[13px] text-bruma">{mission.title}</p>
             </div>
           </div>
@@ -222,7 +222,7 @@ export const CameraMissionModal: React.FC<Props> = ({
           {scanSuccess ? (
             <button
               onClick={handleClaimReward}
-              className="flex w-full items-center justify-center gap-2 rounded-full bg-jade py-3.5 text-[15px] font-bold text-lino transition-transform active:scale-[0.98]"
+              className="btn-sello w-full py-3.5 text-[15px]"
             >
               <CheckCircle2 className="h-[18px] w-[18px]" />
               <span>Reclamar recompensa y regresar</span>
@@ -231,7 +231,7 @@ export const CameraMissionModal: React.FC<Props> = ({
             <button
               onClick={handleCaptureAndScan}
               disabled={isScanning}
-              className="flex w-full items-center justify-center gap-2 rounded-full bg-tinta py-3.5 text-[15px] font-bold text-lino transition-transform active:scale-[0.98] disabled:opacity-50"
+              className="btn-sello w-full bg-tinta py-3.5 text-[15px] disabled:opacity-50"
             >
               <Camera className="h-[18px] w-[18px]" />
               <span>{isScanning ? 'Analizando captura...' : 'Tomar foto y escanear'}</span>

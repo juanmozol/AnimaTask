@@ -60,7 +60,7 @@ export const AbandonSheet: React.FC<Props> = ({ task, onConfirm, onClose }) => {
       </p>
 
       <div className="mt-5 flex gap-3">
-        <button onClick={onClose} className="flex-1 rounded-full bg-jade py-3.5 text-[15px] font-bold text-lino">
+        <button onClick={onClose} className="btn-sello flex-1 py-3.5 text-[15px]">
           Mantener la tarea
         </button>
         <button
@@ -78,7 +78,7 @@ export const AbandonSheet: React.FC<Props> = ({ task, onConfirm, onClose }) => {
             if (e.key === ' ' || e.key === 'Enter') stop();
           }}
           onContextMenu={e => e.preventDefault()}
-          className="relative flex-1 touch-none overflow-hidden rounded-full border border-rubia py-3.5 text-[15px] font-bold text-rubia"
+          className="cut relative flex-1 touch-none overflow-hidden border-[1.5px] border-rubia py-3.5 text-[15px] font-bold text-rubia"
           aria-label="Mantén presionado 3 segundos para abandonar"
         >
           <span
