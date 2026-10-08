@@ -35,8 +35,22 @@ const fromBalance = (balance: number): CorruptionLevel => {
   return 0;
 };
 
+// On the Shadow path the form sets the ceiling (B2 = 2, B3 = 3, B4 = 4) and the balance pulls it
+// down as the habits come back: <= -20 full, <= -10 one step less, < 0 two, then 1 until it redeems.
+const SHADOW_STEPS: Array<[number, CorruptionLevel]> = [
+  [-20, 4],
+  [-10, 3],
+  [-1, 2],
+];
+const fromShadowBalance = (balance: number): CorruptionLevel => {
+  for (const [limit, level] of SHADOW_STEPS) if (balance <= limit) return level;
+  return 1;
+};
+
 export function corruptionLevel(c: Pick<CreatureState, 'tier' | 'alignment' | 'balance'>): CorruptionLevel {
-  if (c.tier >= 2 && c.alignment === 'shadow') return Math.min(4, c.tier) as CorruptionLevel;
+  if (c.tier >= 2 && c.alignment === 'shadow') {
+    return Math.min(c.tier, fromShadowBalance(c.balance)) as CorruptionLevel;
+  }
   return fromBalance(c.balance);
 }
 

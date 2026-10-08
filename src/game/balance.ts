@@ -6,7 +6,9 @@ import { CreatureAlignment, Task } from '../types';
  * - Doing chores / camera missions / family moments pushes toward Armonía (+).
  * - Daily tasks left undone and days without family time push toward Sombra (-).
  * - The path is decided when the creature leaves "Principal" (stage 1): balance >= 0 → Armonía
- *   (P2 → P3 → P4), balance < 0 → Abismo (B2 → B3 → B4). After that it stays fixed.
+ *   (P2 → P3 → P4), balance < 0 → Abismo (B2 → B3 → B4).
+ * - The Abyss is not forever: going back to the tasks raises the balance, the interface clears
+ *   step by step, and at BALANCE.redeem the creature turns into its Harmony twin (same stage).
  */
 export const BALANCE = {
   min: -100,
@@ -25,6 +27,7 @@ export const BALANCE = {
   noFamilyDay: -5,
   noFamilyAfterDays: 3, // days since the last family moment before it starts to hurt
   maxCatchUpDays: 3, // coming back after a long break never costs more than this many days
+  redeem: 10, // a Shadow creature whose balance climbs back to this returns to the Harmony path
 } as const;
 
 export const clampBalance = (n: number): number => Math.max(BALANCE.min, Math.min(BALANCE.max, n));

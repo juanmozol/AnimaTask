@@ -188,6 +188,18 @@ export default function App() {
     save('animatask_game', game);
   }, [game]);
 
+  // Coming back from the Abyss: once the balance climbs to BALANCE.redeem, the Shadow creature
+  // turns into its Harmony twin at the same stage.
+  useEffect(() => {
+    if (creature.tier >= 2 && creature.alignment === 'shadow' && creature.balance >= BALANCE.redeem) {
+      setCreature(prev =>
+        prev.tier >= 2 && prev.alignment === 'shadow' && prev.balance >= BALANCE.redeem
+          ? withCatalogIdentity({ ...prev, alignment: 'harmony' })
+          : prev
+      );
+    }
+  }, [creature.tier, creature.alignment, creature.balance]);
+
   // Close finished days: pending daily tasks and missing family time lower the balance.
   const closeDays = (days: number, newLastDay?: string) => {
     if (days <= 0) return;
@@ -490,7 +502,8 @@ export default function App() {
 
   const handleSetPath = (path: CreatureAlignment) => {
     sound.playTap();
-    const balance = path === 'harmony' ? 60 : -60;
+    // Shadow starts just inside the darkest step, so a demo can show the way back in a few tasks.
+    const balance = path === 'harmony' ? 60 : -24;
     setCreature(prev =>
       prev.tier <= 1 ? { ...prev, balance } : withCatalogIdentity({ ...prev, balance, alignment: path })
     );
